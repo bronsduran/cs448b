@@ -6,6 +6,7 @@ import subprocess
 from threading import Timer
 
 timeout = 10 # seconds allowing for traceroute to timeout
+numDumps = 50 # the number of TCP Dumps that we want to accumulate
 
 
 
@@ -43,7 +44,7 @@ def getLatLon(address):
 
 
 # sudo tcpdump -i any -n -c 100 ip -q
-proc = subprocess.Popen(["sudo tcpdump -i any -n -c 50 ip -q"], stdout=subprocess.PIPE, shell=True)
+proc = subprocess.Popen(["sudo tcpdump -i any -n -c "+str(numDumps)+" ip -q"], stdout=subprocess.PIPE, shell=True)
 (out, err) = proc.communicate()
 print out
 
