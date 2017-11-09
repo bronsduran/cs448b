@@ -1,9 +1,8 @@
-# sudo pip install python-geoip
-import urllib2
-import json
 import collections
+import json
 import subprocess
 from threading import Timer
+import urllib2
 
 timeout = 10 # seconds allowing for traceroute to timeout
 numDumps = 50 # the number of TCP Dumps that we want to accumulate
