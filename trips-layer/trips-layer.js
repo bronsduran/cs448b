@@ -89,7 +89,6 @@ export default class TripsLayer extends Layer {
 
   calculateIndices(attribute) {
     const {pathLengths, vertexCount} = this.state;
-
     const indicesCount = (vertexCount - pathLengths.length) * 2;
     const indices = new Uint32Array(indicesCount);
 

@@ -8,6 +8,7 @@ import {json as requestJson} from 'd3-request';
 
 var trips = require('./trips.json');
 var buildings = require('./buildings.json');
+var networkTraffic = require('./network-traffic.json');
 
 // Set your mapbox token here
 const MAPBOX_TOKEN = "pk.eyJ1IjoiYnJvbnNkdXJhbiIsImEiOiJjajk5Ym5vcHgwanc3MzNwYWd4YXBqaTFiIn0.I3l_rQOCwWnZXAced7328w" //process.env.MapboxAccessToken; // eslint-disable-line
@@ -23,7 +24,7 @@ class Root extends Component {
         height: 500
       },
       buildings: buildings,
-      trips: trips,
+      networkTraffic: networkTraffic,
       time: 0
     };
   }
@@ -65,7 +66,7 @@ class Root extends Component {
   }
 
   render() {
-    const {viewport, buildings, trips, time} = this.state;
+    const {viewport, buildings, networkTraffic, time} = this.state;
 
     return (
       <MapGL
@@ -75,7 +76,7 @@ class Root extends Component {
         mapboxApiAccessToken={MAPBOX_TOKEN}>
         <DeckGLOverlay viewport={viewport}
           buildings={buildings}
-          trips={trips}
+          networkTraffic={networkTraffic}
           trailLength={180}
           time={time}
           />

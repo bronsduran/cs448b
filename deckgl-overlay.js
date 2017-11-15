@@ -15,8 +15,8 @@ export default class DeckGLOverlay extends Component {
 
   static get defaultViewport() {
     return {
-      longitude: -74,
-      latitude: 40.72,
+      longitude: -122.166,
+      latitude: 37.4241,
       zoom: 13,
       maxZoom: 16,
       pitch: 45,
@@ -25,20 +25,20 @@ export default class DeckGLOverlay extends Component {
   }
 
   render() {
-    const {viewport, buildings, trips, trailLength, time} = this.props;
+    const {viewport, buildings, networkTraffic, trailLength, time} = this.props;
 
-    if (!buildings || !trips) {
+    if (!buildings || !networkTraffic) {
       return null;
     }
 
     const layers = [
       new TripsLayer({
         id: 'trips',
-        data: trips,
-        getPath: d => d.segments,
-        getColor: d => d.vendor === 0 ? [253, 128, 93] : [23, 184, 190],
+        data: networkTraffic,
+        getPath: d => d.route,
+        getColor: d => d.protocol === 'tcp' ? [253, 128, 93] : [23, 184, 190],
         opacity: 0.3,
-        strokeWidth: 2,
+        strokeWidth: 20,
         trailLength,
         currentTime: time
       })

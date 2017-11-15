@@ -57,10 +57,10 @@ from sets import Set
 from multiprocessing.pool import ThreadPool
 
 timeout = 10        # seconds allowing for mtr to timeout
-numPackets = 15     # the number of packets that we want to capture
+numPackets = 50     # the number of packets that we want to capture
 numCycles = 1       # number of mtr cycles to run
 userLat = 37.4275   # hard coded to stanford for now
-userLon = 122.1697  # hard coded to stanford for now
+userLon = -122.1697  # hard coded to stanford for now
 
 Routes = {}
 VisData = []
@@ -86,9 +86,6 @@ def isLocalIP(dest):
     return False
 
 def getLatLon(address):
-
-    if isLocalIP(address):
-        return (float(userLat), float(userLon))
 
     api = "http://freegeoip.net/json/" + address
     try:
@@ -160,9 +157,12 @@ def getRoute(destIP, relStartTime):
         
         if line[1] == "???":    
             continue
+
+        if isLocalIP(line[1]):
+            continue
         
         route.append([getLatLon(line[1])[0], getLatLon(line[1])[1], 
-                      relStartTime + float(line[2])])
+                      (relStartTime + float(line[2]))*100])
     
     Routes[destIP] = route
     return route
@@ -204,6 +204,9 @@ for counter, line in enumerate(lines):
     destPort = str(getPort(line[4])).replace(":","")
     protocol = line[5].replace(",","")
 
+    if isLocalIP(destIP):
+        continue
+
     if counter == 0:
         startTime = timestamp
 
@@ -220,7 +223,7 @@ for counter, line in enumerate(lines):
 
     VisData.append(packet);
 
-with open('newtork-traffic.json', 'w') as fp:
+with open('network-traffic.json', 'w') as fp:
     json.dump(VisData, fp) 
 
 
