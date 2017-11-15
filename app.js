@@ -6,14 +6,11 @@ import DeckGLOverlay from './deckgl-overlay.js';
 
 import {json as requestJson} from 'd3-request';
 
+var trips = require('./trips.json');
+var buildings = require('./buildings.json');
+
 // Set your mapbox token here
 const MAPBOX_TOKEN = "pk.eyJ1IjoiYnJvbnNkdXJhbiIsImEiOiJjajk5Ym5vcHgwanc3MzNwYWd4YXBqaTFiIn0.I3l_rQOCwWnZXAced7328w" //process.env.MapboxAccessToken; // eslint-disable-line
-
-// Source data CSV
-const DATA_URL = {
-  BUILDINGS: 'https://raw.githubusercontent.com/uber-common/deck.gl-data/master/examples/trips/buildings.json',  // eslint-disable-line
-  TRIPS: 'https://raw.githubusercontent.com/uber-common/deck.gl-data/master/examples/trips/trips.json'  // eslint-disable-line
-};
 
 class Root extends Component {
 
@@ -25,22 +22,10 @@ class Root extends Component {
         width: 500,
         height: 500
       },
-      buildings: null,
-      trips: null,
+      buildings: buildings,
+      trips: trips,
       time: 0
     };
-
-    requestJson(DATA_URL.BUILDINGS, (error, response) => {
-      if (!error) {
-        this.setState({buildings: response});
-      }
-    });
-
-    requestJson(DATA_URL.TRIPS, (error, response) => {
-      if (!error) {
-        this.setState({trips: response});
-      }
-    });
   }
 
   componentDidMount() {

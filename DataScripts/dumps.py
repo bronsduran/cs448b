@@ -1,14 +1,69 @@
+# We need the users Lat & Long 
+#
+# The first packet's start time to zero, from there we 
+# set the relative start times for the rest of the packets
+# 
+# pN-start-time = pN-timestamp - p1-timestamp
+#
+# ----------- Data Format ---------
+# [{
+#   "src-ip": src-ip,                                               // Packet 1
+#   "dest-ip": dest-ip, 
+#   "protocol": protocol,                   
+#   "src-port": src-port,
+#   "dest-port": dest-port,
+#   "route": [
+#     [userLat, userLong, p1-start-time],  
+#     [p1-h1-lat, p1-h1-long, p1-h1-delay],
+#     ...
+#     [p1-hM-lat, p1-hM-long, p1-hM-delay]  
+#   ]
+# },
+# { 
+#   "src-ip": src-ip,                                               // Packet 2
+#   "dest-ip": dest-ip,
+#   "protocol": protocol,                   
+#   "src-port" : src-port,
+#   "dest-port" : dest-port,
+#   "route": [
+#     [userLat, userLong, p2-start-time],  
+#     [p2-h1-lat, p2-h1-long, p2-start-time + p2-h1-delay],
+#      ...  
+#     [p2-hM-lat, p2-hM-long, p2-start-time + p2-hM-delay]
+#   ]
+# },
+# ...
+# {
+#   "src-ip": src-ip,                                               // Packet n
+#   "dest-ip": dest-ip,
+#   "protocol": protocol,                    
+#   "src-port" : src-port,
+#   "dest-port" : dest-port,
+#   "route": [
+#     [userLat, userLong, pN-start-time],               
+#     [pN-h1-lat, pN-h1-long, pN-start-time + pN-h1-delay],
+#      ...  
+#     [pN-hM-lat, pN-hM-long, pN-start-time + pN-hM-delay]
+#   ]
+# }]
+
 import collections
 import json
 import subprocess
 from threading import Timer
 import urllib2
+import json
+from sets import Set
+from multiprocessing.pool import ThreadPool
 
-timeout = 10 # seconds allowing for traceroute to timeout
-numDumps = 50 # the number of TCP Dumps that we want to accumulate
+timeout = 10        # seconds allowing for mtr to timeout
+numPackets = 15     # the number of packets that we want to capture
+numCycles = 1       # number of mtr cycles to run
+userLat = 37.4275   # hard coded to stanford for now
+userLon = 122.1697  # hard coded to stanford for now
 
-
-
+Routes = {}
+VisData = []
 
 def isLocalIP(dest):
     """
@@ -31,6 +86,10 @@ def isLocalIP(dest):
     return False
 
 def getLatLon(address):
+
+    if isLocalIP(address):
+        return (float(userLat), float(userLon))
+
     api = "http://freegeoip.net/json/" + address
     try:
         result = urllib2.urlopen(api).read()
@@ -40,128 +99,132 @@ def getLatLon(address):
         print("Could not find: ", address)
         return None
 
+def getIP(ipPort):
+    nums = ipPort.split(".")
+    return nums[0] + "." + nums[1] + "." + nums[2] + "." + nums[3]
+
+def getPort(ipPort):
+    nums = ipPort.split(".")
+    if len(nums) < 5: 
+        return 0
+    else:   
+        return nums[4]
 
 
-# sudo tcpdump -i any -n -c 100 ip -q
-proc = subprocess.Popen(["sudo tcpdump -i any -n -c "+str(numDumps)+" ip -q"], stdout=subprocess.PIPE, shell=True)
+#------- mtr outpout format  -------#
+
+# mtr -rn -o "A" -c 3 google.com
+
+# -r generate mtr report
+# -n don't resolve host names
+# -c number of mtr cycles to run 
+# -o "A" only show the average latency
+
+# Start: 2017-11-14T22:01:57-0800
+# HOST: AAA.SUNet                     Avg
+#   1.|-- 10.31.64.2                  1.2
+#   2.|-- 128.12.1.42                 1.2
+#   3.|-- 128.12.1.54                 1.5
+#   4.|-- 128.12.0.205               47.1
+#   5.|-- 137.164.23.157              3.0
+#   6.|-- 74.125.48.172               3.6
+#   7.|-- 108.170.243.1               7.4
+#   8.|-- 108.170.237.119             4.2
+#   9.|-- 216.58.195.238              3.3
+
+def getRoute(destIP, relStartTime):
+ 
+    route = Routes.get(destIP) # return none if key doesn't exist
+
+    if route is not None:
+        return route
+
+    route = []
+
+    p = subprocess.Popen(["mtr -rn -o \"A\" -c " + str(numCycles) + " " + destIP], 
+                          stdout=subprocess.PIPE, shell=True)
+
+    (out, err) = p.communicate()
+
+    lines = out.split('\n')
+    for counter, line in enumerate(lines):
+    
+        if counter == 0 or counter == 1:
+            continue
+
+        line = line.split(" ")
+        line = filter(None, line)
+
+        if len(line) < 3:
+            continue
+        
+        if line[1] == "???":    
+            continue
+        
+        route.append([getLatLon(line[1])[0], getLatLon(line[1])[1], 
+                      relStartTime + float(line[2])])
+    
+    Routes[destIP] = route
+    return route
+
+
+# -------- tcpdump output format --------- #
+
+# tcpdump -i any -n -c {num packets} ip -q
+
+# 19:17:13.090753 IP 10.31.78.74.5353 > 224.0.0.251.5353: UDP, length 1431
+
+# -i any: listen on all interfaces
+# -n: don't resolve host names
+# -q: be less verbose with output 
+# -c: capture up to num packets 
+# ip: only capture IP packets 
+
+proc = subprocess.Popen(["tcpdump -i any -n -c "+str(numPackets)+" ip -q"],
+                        stdout=subprocess.PIPE, shell=True)
+
 (out, err) = proc.communicate()
 print out
 
-
-
-destinationsDict = collections.defaultdict(dict)
+startTime = 0
 
 lines = out.split('\n')
-for line in lines:
-    line = line.strip()
-    if line == "":
+
+for counter, line in enumerate(lines):
+        
+    line = line.split(" ")
+
+    if len(line) < 4:
         continue
 
-    destination = '.'.join(line.split('> ')[1].split(':')[0].split('.')[0:4])
+    timestamp = line[0]
+    srcIP = getIP(line[2])
+    srcPort = getPort(line[2])
+    destIP = getIP(line[4]).replace(":","")
+    destPort = str(getPort(line[4])).replace(":","")
+    protocol = line[5].replace(",","")
 
-    if isLocalIP(destination):
-        continue
+    if counter == 0:
+        startTime = timestamp
 
-    udptcp = line.split('> ')[1].split(': ')[1]
-    udptcp = udptcp[:3]
+    # need to convert to ms should be timestamp - startTime not 0
+    print "Getting routing data for packet " + str(counter + 1) +"/"+ str(len(lines))
+    route = getRoute(destIP, 0)
 
-    length = line.split(' ')[-1]
+    packet = {"src-ip": srcIP,                                              
+              "dest-ip": destIP,
+              "protocol": protocol,                    
+              "src-port" : srcPort,
+              "dest-port" : destPort,
+              "route": route}
 
+    VisData.append(packet);
 
-    thisD = destinationsDict[destination]
-    if len(thisD) == 0:
-        thisD['count'] = 1
-        thisD['type'] = [udptcp]
-        thisD['lengths'] = [length]
-    else:
-        thisD['count'] += 1
-        thisD['type'].append(udptcp)
-        thisD['lengths'].append(length)
-    destinationsDict[destination] = thisD
-
-print destinationsDict
-print ""
-
-
-# FAKE DICTIONARY FOR TESTING PURPOSES
-destinationsDict = {"23.203.187.27":{'count':1, 'type':['tcp'], 'length':[100]}}
-destinationsDict["23.203.225.13"] = {'count':1, 'type':['tcp'], 'length':[100]}
-
-counter = 0
-for ip in destinationsDict:
-    counter += 1
-    print "running traceroute for ip =", ip, "("+str(counter)+"/"+str(len(destinationsDict))+")"
-
-
-
-    p = subprocess.Popen(["traceroute -d "+ip], stdout=subprocess.PIPE, shell=True)
-
-    killed = False
-    def k(x):
-        x.kill()
-
-        global killed
-        killed = True
-
-        print "KILLED DUE TO TIMEOUT (" + str(timeout) + " seconds)"
-
-    my_timer = Timer(timeout, k, [p])
-    try:
-        my_timer.start()
-        (out, err) = p.communicate()
-        if not killed:
-            # we want to store this
-            destinationsDict[ip]['traceroute'] = out
-            #print out
-    finally:
-        my_timer.cancel()
-        killed = False
-
-    print ''
+with open('newtork-traffic.json', 'w') as fp:
+    json.dump(VisData, fp) 
 
 
 
 
-finalOutputDict = {}
-
-print "Final output:"
-for ip in destinationsDict:
-    if 'traceroute' in destinationsDict[ip]:
-        lines = destinationsDict[ip]['traceroute'].split('\n')
-
-        ipRoute = []
-        timeAverages = []
-        latitudes = []
-        longitudes = []
-
-        dataVizFormat = []
-        for line in lines:
-            line = line.strip()
-            if line == "":
-                continue
-            # get the IP from this line
-            thisIP = line.split('(')[1].split(')')[0]
-            ipRoute.append(thisIP)
-
-            # get the latitude/longitude of this IP
-            (latitude, longitude) = getLatLon(thisIP)
-
-            latitudes.append(latitude)
-            longitudes.append(longitude)
-
-            # we want to compute the average time delay (ms) per line
-            times = line.split(')')[1].split(' ms')[0:3]
-            avgTime = sum([float(x.strip()) for x in times])/len(times)
-            timeAverages.append(avgTime)
-
-            dataVizFormat.append([latitude, longitude, avgTime])
 
 
-        # make sure that we ended up at the IP we asked for!
-        if ipRoute[-1] != ip:
-            continue
-
-        finalOutputDict[ip] = dataVizFormat
-
-
-print finalOutputDict
