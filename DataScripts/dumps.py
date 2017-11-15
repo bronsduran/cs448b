@@ -54,11 +54,10 @@ from threading import Timer
 import urllib2
 import json
 from sets import Set
-from multiprocessing.pool import ThreadPool
 
 timeout = 10        # seconds allowing for mtr to timeout
 numPackets = 50     # the number of packets that we want to capture
-numCycles = 1       # number of mtr cycles to run
+numCycles = 2       # number of mtr cycles to run
 userLat = 37.4275   # hard coded to stanford for now
 userLon = -122.1697  # hard coded to stanford for now
 
@@ -152,16 +151,10 @@ def getRoute(destIP, relStartTime):
         line = line.split(" ")
         line = filter(None, line)
 
-        if len(line) < 3:
+        if len(line) < 3 or line[1] == "???" or isLocalIP(line[1]):
             continue
         
-        if line[1] == "???":    
-            continue
-
-        if isLocalIP(line[1]):
-            continue
-        
-        route.append([getLatLon(line[1])[0], getLatLon(line[1])[1], 
+        route.append([getLatLon(line[1])[1], getLatLon(line[1])[0], 
                       (relStartTime + float(line[2]))*100])
     
     Routes[destIP] = route
@@ -194,7 +187,7 @@ for counter, line in enumerate(lines):
         
     line = line.split(" ")
 
-    if len(line) < 4:
+    if len(line) < 6:
         continue
 
     timestamp = line[0]
@@ -210,8 +203,10 @@ for counter, line in enumerate(lines):
     if counter == 0:
         startTime = timestamp
 
-    # need to convert to ms should be timestamp - startTime not 0
+    
     print "Getting routing data for packet " + str(counter + 1) +"/"+ str(len(lines))
+    
+    # need to convert to ms should be timestamp - startTime not 0
     route = getRoute(destIP, 0)
 
     packet = {"src-ip": srcIP,                                              
