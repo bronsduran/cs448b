@@ -36,7 +36,7 @@ export default class DeckGLOverlay extends Component {
         id: 'networkTraffic',
         data: networkTraffic,
         getPath: d => d.route,
-        getColor: d => d.protocol === 'tcp' ? [253, 128, 93] : [23, 184, 190],
+        getColor: d => d.protocol == 'tcp' ? [253, 128, 93] : [23, 184, 190],
         opacity: 0.3,
         strokeWidth: 3,
         trailLength,
