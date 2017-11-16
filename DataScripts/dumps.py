@@ -54,24 +54,46 @@ from threading import Timer
 import urllib2
 import json
 from sets import Set
+import netaddr
 
 timeout = 10        # seconds allowing for mtr to timeout
-numPackets = 50     # the number of packets that we want to capture
+numPackets = 10000     # the number of packets that we want to capture
 numCycles = 2       # number of mtr cycles to run
 userLat = 37.4275   # hard coded to stanford for now
 userLon = -122.1697  # hard coded to stanford for now
+timeScaleFactor = 1 # We need to slow down the packets to see them
+
+multicastIPMin = int(netaddr.IPAddress("224.0.0.0")) 
+multicastIPMax = int(netaddr.IPAddress("239.255.255.255"))
+localHostIP = int(netaddr.IPAddress("127.0.0.1"))
+
 
 Routes = {}
 VisData = []
 
-def isLocalIP(dest):
+def isReserved(dest):
     """
     The following IP addresses are known to be reserved
-    only for local IP's.
+    
+    local IP's.
     10.0.0.0 - 10.255.255.255
     172.16.0.0 - 172.31.255.255
     192.168.0.0 - 192.168.255.255
+
+    Multicast IP's
+    224.0.0.0 - 239.255.255.255
+
+    Local host 
+    127.0.0.1
     """
+    ip = int(netaddr.IPAddress(dest))
+
+    if ip >= multicastIPMin and ip <= multicastIPMax:
+        return True
+
+    if ip == localHostIP:
+        return True
+    
     dest = dest.split('.')
     dest = [int(x) for x in dest]
     if dest[0] == 192 and dest[1] == 168:
@@ -83,6 +105,8 @@ def isLocalIP(dest):
     if all(x==255 for x in dest):
         return True
     return False
+
+
 
 def getLatLon(address):
 
@@ -151,11 +175,11 @@ def getRoute(destIP, relStartTime):
         line = line.split(" ")
         line = filter(None, line)
 
-        if len(line) < 3 or line[1] == "???" or isLocalIP(line[1]):
+        if len(line) < 3 or line[1] == "???" or isReserved(line[1]):
             continue
         
         route.append([getLatLon(line[1])[1], getLatLon(line[1])[0], 
-                      (relStartTime + float(line[2]))*100])
+                      (relStartTime + float(line[2]))*timeScaleFactor])
     
     Routes[destIP] = route
     return route
@@ -197,7 +221,7 @@ for counter, line in enumerate(lines):
     destPort = str(getPort(line[4])).replace(":","")
     protocol = line[5].replace(",","")
 
-    if isLocalIP(destIP):
+    if isReserved(destIP):
         continue
 
     if counter == 0:

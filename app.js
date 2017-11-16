@@ -77,7 +77,7 @@ class Root extends Component {
         <DeckGLOverlay viewport={viewport}
           buildings={buildings}
           networkTraffic={networkTraffic}
-          trailLength={180}
+          trailLength={5}
           time={time}
           />
       </MapGL>

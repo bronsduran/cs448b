@@ -17,9 +17,9 @@ export default class DeckGLOverlay extends Component {
     return {
       longitude: -122.166,
       latitude: 37.4241,
-      zoom: 13,
+      zoom: 2,
       maxZoom: 16,
-      pitch: 45,
+      pitch: 15,
       bearing: 0
     };
   }
@@ -38,9 +38,10 @@ export default class DeckGLOverlay extends Component {
         getPath: d => d.route,
         getColor: d => d.protocol == 'tcp' ? [253, 128, 93] : [23, 184, 190],
         opacity: 0.3,
-        strokeWidth: 3,
+        strokeWidth: 5,
         trailLength,
-        currentTime: time
+        currentTime: time,
+        fp64: true
       })
       // new PolygonLayer({
       //   id: 'buildings',
