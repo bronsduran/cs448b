@@ -175,6 +175,7 @@ def getRouteGivenP(destIP, relStartTime, p):
                       (relStartTime + float(line[2]))*timeScaleFactor])
 
     Routes[destIP] = route
+    print route
     return route
 
 
@@ -209,12 +210,10 @@ for counter, line in enumerate(lines):
 
     line = line.split(" ")
 
-    if len(line) < 6:
+    if len(line) < 6 or line[2] == "wrong":
         continue
 
     timestamp = line[0]
-    srcIP = getIP(line[2])
-    srcPort = getPort(line[2])
     destIP = getIP(line[4]).replace(":","")
     destPort = str(getPort(line[4])).replace(":","")
     protocol = line[5].replace(",","")
@@ -234,10 +233,8 @@ for counter, line in enumerate(lines):
     if route is None:
         p = subprocess.Popen(["mtr -rn -o \"A\" -c " + str(numCycles) + " " + destIP],
                               stdout=subprocess.PIPE, shell=True)
-        packet = {"src-ip": srcIP,
-                  "dest-ip": destIP,
+        packet = {"dest-ip": destIP,
                   "protocol": protocol,
-                  "src-port" : srcPort,
                   "dest-port" : destPort,
                   "route": None}
         processes.append((p,packet))
