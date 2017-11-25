@@ -60,7 +60,7 @@ import time
 import urllib2
 
 timeout = 10        # seconds allowing for mtr to timeout
-numPackets = 1000     # the number of packets that we want to capture
+numPackets = 10000     # the number of packets that we want to capture
 numCycles = 2       # number of mtr cycles to run
 userLat = 37.4275   # hard coded to stanford for now
 userLon = -122.1697  # hard coded to stanford for now
