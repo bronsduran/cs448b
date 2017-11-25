@@ -48,6 +48,7 @@
 # }]
 
 import collections
+import datetime
 import json
 import subprocess
 from threading import Timer
@@ -56,13 +57,17 @@ import json
 from sets import Set
 import netaddr
 import time
+import urllib2
 
 timeout = 10        # seconds allowing for mtr to timeout
-numPackets = 10000     # the number of packets that we want to capture
+numPackets = 1000     # the number of packets that we want to capture
 numCycles = 2       # number of mtr cycles to run
 userLat = 37.4275   # hard coded to stanford for now
 userLon = -122.1697  # hard coded to stanford for now
 timeScaleFactor = 1 # We need to slow down the packets to see them
+
+# This is a list of the URL's to query from all around the world
+urls = ["http://bbc.co.uk", "http://government.ru/en/", "https://www.gov.za/", "http://www.dubai.ae/en/Pages/default.aspx", "http://english.gov.cn/"]
 
 multicastIPMin = int(netaddr.IPAddress("224.0.0.0"))
 multicastIPMax = int(netaddr.IPAddress("239.255.255.255"))
@@ -131,6 +136,12 @@ def getPort(ipPort):
     else:
         return nums[4]
 
+def timestampDifferences(timestamp1, timestamp2):
+    # 15:02:19.732712
+    dt1 = datetime.datetime.strptime(timestamp1, '%H:%M:%S.%f')
+    dt2 = datetime.datetime.strptime(timestamp2, '%H:%M:%S.%f')
+    return abs((dt2-dt1).total_seconds())
+
 
 #------- mtr outpout format  -------#
 
@@ -196,7 +207,17 @@ print "First, let's get all of the unique IP's"
 proc = subprocess.Popen(["tcpdump -i any -n -c "+str(numPackets)+" ip -q"],
                         stdout=subprocess.PIPE, shell=True)
 
+
+for url in urls:
+    if proc.poll() is not None:
+        break
+    print "Getting the following url:", url
+    urllib2.urlopen(url).read()
+
+
+
 (out, err) = proc.communicate()
+print "Done collecting IP's"
 print out
 
 startTime = 0
@@ -213,15 +234,17 @@ for counter, line in enumerate(lines):
     if len(line) < 6 or line[2] == "wrong":
         continue
 
+
     timestamp = line[0]
     destIP = getIP(line[4]).replace(":","")
     destPort = str(getPort(line[4])).replace(":","")
     protocol = line[5].replace(",","")
 
+
     if isReserved(destIP):
         continue
 
-    if counter == 0:
+    if startTime == 0:
         startTime = timestamp
 
 
@@ -233,9 +256,11 @@ for counter, line in enumerate(lines):
     if route is None:
         p = subprocess.Popen(["mtr -rn -o \"A\" -c " + str(numCycles) + " " + destIP],
                               stdout=subprocess.PIPE, shell=True)
+
         packet = {"dest-ip": destIP,
                   "protocol": protocol,
                   "dest-port" : destPort,
+                  "relative-start-time" : timestampDifferences(startTime, timestamp),
                   "route": None}
         processes.append((p,packet))
 
@@ -247,7 +272,7 @@ print "Waiting for all of the parallel processes to finish!"
 beginningTime = time.time()
 for p, packet in processes:
     p.wait()
-    packet["route"] = getRouteGivenP(packet["dest-ip"], 0, p)
+    packet["route"] = getRouteGivenP(packet["dest-ip"], packet["relative-start-time"], p)
     Routes[destIP] = packet["dest-ip"]
     VisData.append(packet);
 
