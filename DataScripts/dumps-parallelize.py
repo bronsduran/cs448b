@@ -224,7 +224,7 @@ for url in urls:
 
 
 (out, err) = proc.communicate()
-print "Done collecting IP's"
+print "Done capturing packets"
 print out
 
 startTime = 0
