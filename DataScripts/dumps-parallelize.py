@@ -58,6 +58,8 @@ from sets import Set
 import netaddr
 import time
 import urllib2
+import sys
+import os
 
 timeout = 10        # seconds allowing for mtr to timeout
 numPackets = 10000     # the number of packets that we want to capture
@@ -204,8 +206,13 @@ def getRouteGivenP(destIP, relStartTime, p):
 
 print "First, let's get all of the unique IP's"
 
-proc = subprocess.Popen(["tcpdump -i any -n -c "+str(numPackets)+" ip -q"],
-                        stdout=subprocess.PIPE, shell=True)
+proc = None
+if sys.platform.startswith('win'):
+    path = os.path.dirname(os.path.abspath(__file__)) + "\\"+ 'WinDump.exe'
+    print path
+    proc = subprocess.Popen([path, " -n -c "+str(numPackets)+" ip -q"], stdout=subprocess.PIPE, shell=True)
+else:
+    proc = subprocess.Popen(["tcpdump -i any -n -c "+str(numPackets)+" ip -q"], stdout=subprocess.PIPE, shell=True)
 
 
 for url in urls:
