@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import DeckGL, {PolygonLayer, ScatterplotLayer} from 'deck.gl';
+import DeckGL, {PolygonLayer, ScatterplotLayer, PathLayer, ArcLayer} from 'deck.gl';
 import TripsLayer from './trips-layer';
 
 const LIGHT_SETTINGS = {
@@ -41,7 +41,7 @@ export default class DeckGLOverlay extends Component {
         strokeWidth: 5,
         trailLength,
         currentTime: time,
-        fp64: true
+        fp64: false
       }),
       new ScatterplotLayer({
       	id: 'networkEndpoints',
@@ -50,8 +50,27 @@ export default class DeckGLOverlay extends Component {
       	getColor: d => d.protocol == 'tcp' ? [253, 128, 93] : [23, 184, 190],
       	opacity: 0.1,
       	radiusScale: 10000,
-      	fps64: true
+      	fps64: false
 
+      }),
+      new ScatterplotLayer({
+        id: 'networkStartpoints',
+        data: networkTraffic,
+        getPosition: d => ((d.route).slice(1)[0]),
+        getColor: d => d.protocol == 'tcp' ? [253, 128, 93] : [23, 184, 190],
+        opacity: 0.1,
+        radiusScale: 10000,
+        fps64: false
+
+      }),
+      new PathLayer({
+        id: 'pathGuide',
+        data: networkTraffic,
+        rounded: true,
+        getWidth: d=> 500,
+        getPath: d=> d.route,
+        getColor: d=> [173, 216, 230],
+        fps64: false
       })
       // new PolygonLayer({
       //   id: 'buildings',
