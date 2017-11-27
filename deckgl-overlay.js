@@ -56,7 +56,17 @@ export default class DeckGLOverlay extends Component {
       new ScatterplotLayer({
         id: 'networkStartpoints',
         data: networkTraffic,
-        getPosition: d => ((d.route).slice(1)[0]),
+        getPosition: d => ((d.route).slice(0,1)[0]),
+        getColor: d => d.protocol == 'tcp' ? [253, 128, 93] : [23, 184, 190],
+        opacity: 0.1,
+        radiusScale: 10000,
+        fps64: false
+
+      }),
+       new ScatterplotLayer({
+        id: 'networkMidpoints',
+        data: networkTraffic,
+        getPosition: d => ((d.route).slice(1, -1)[0]),
         getColor: d => d.protocol == 'tcp' ? [253, 128, 93] : [23, 184, 190],
         opacity: 0.1,
         radiusScale: 10000,
