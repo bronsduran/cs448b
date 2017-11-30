@@ -49,9 +49,10 @@ class Root extends Component {
 
   _animate() {
     const timestamp = Date.now();
-    const loopLength = 1800;
-    const loopTime = 60000;
+    const loopLength = 155; // loop length in number of frames
+    const loopTime = 5000; // milliseconds for the entire loop
     var previousTime = this.state.lastUpdateTime;
+    //console.log(((timestamp % loopTime) / loopTime) * loopLength);
 
     this.setState({
       lastUpdateTime: previousTime+1,
@@ -59,9 +60,15 @@ class Root extends Component {
       time: ((timestamp % loopTime) / loopTime) * loopLength
     });
 
-    if (previousTime % 1000 == 0) {
+    if (previousTime % 100 == 0) {
       console.log("Reload latest network traffic");
-      this.latestNetworkTraffic = require('./network-traffic1.json');
+      try {
+        this.latestNetworkTraffic = require('./network-traffic1.json');
+        console.log("updated to file 1");
+      } catch (e) {
+        console.log("no file 1");
+      }
+      //console.log(this.latestNetworkTraffic);
     }
 
     this._animationFrame = window.requestAnimationFrame(this._animate.bind(this));
