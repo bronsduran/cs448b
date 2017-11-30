@@ -41,7 +41,10 @@ export default class DeckGLOverlay extends Component {
         strokeWidth: 5,
         trailLength,
         currentTime: time,
-        fp64: true
+        fp64: true,
+        updateTriggers: {
+          data: networkTraffic
+        }
       }),
       new ScatterplotLayer({
       	id: 'networkEndpoints',
@@ -50,7 +53,10 @@ export default class DeckGLOverlay extends Component {
       	getColor: d => d.protocol == 'tcp' ? [253, 128, 93] : [23, 184, 190],
       	opacity: 0.1,
       	radiusScale: 10000,
-      	fps64: true
+      	fps64: true,
+        updateTriggers: {
+          data: networkTraffic
+        }
 
       }),
       new ScatterplotLayer({
@@ -60,7 +66,10 @@ export default class DeckGLOverlay extends Component {
         getColor: d => d.protocol == 'tcp' ? [253, 128, 93] : [23, 184, 190],
         opacity: 0.1,
         radiusScale: 10000,
-        fps64: true
+        fps64: true,
+        updateTriggers: {
+          data: networkTraffic
+        }
 
       }),
        new ScatterplotLayer({
@@ -70,7 +79,10 @@ export default class DeckGLOverlay extends Component {
         getColor: d => d.protocol == 'tcp' ? [253, 128, 93] : [23, 184, 190],
         opacity: 0.1,
         radiusScale: 10000,
-        fps64: true
+        fps64: true,
+        updateTriggers: {
+          data: networkTraffic
+        }
 
       }),
       new PathLayer({
@@ -80,7 +92,10 @@ export default class DeckGLOverlay extends Component {
         getWidth: d=> 500,
         getPath: d=> d.route,
         getColor: d=> [173, 216, 230],
-        fps64: true
+        fps64: true,
+        updateTriggers: {
+          data: networkTraffic
+        }
       })
       // new PolygonLayer({
       //   id: 'buildings',

@@ -15,8 +15,11 @@ const MAPBOX_TOKEN = "pk.eyJ1IjoiYnJvbnNkdXJhbiIsImEiOiJjajk5Ym5vcHgwanc3MzNwYWd
 
 class Root extends Component {
 
+
   constructor(props) {
     super(props);
+    this.latestNetworkTraffic = networkTraffic;
+
     this.state = {
       viewport: {
         ...DeckGLOverlay.defaultViewport,
@@ -25,8 +28,11 @@ class Root extends Component {
       },
       buildings: buildings,
       networkTraffic: networkTraffic,
-      time: 0
+      time: 0,
+      lastUpdateTime: 1
     };
+
+
   }
 
   componentDidMount() {
@@ -45,10 +51,19 @@ class Root extends Component {
     const timestamp = Date.now();
     const loopLength = 1800;
     const loopTime = 60000;
+    var previousTime = this.state.lastUpdateTime;
 
     this.setState({
+      lastUpdateTime: previousTime+1,
+      networkTraffic: this.latestNetworkTraffic,
       time: ((timestamp % loopTime) / loopTime) * loopLength
     });
+
+    if (previousTime % 1000 == 0) {
+      console.log("Reload latest network traffic");
+      this.latestNetworkTraffic = require('./network-traffic1.json');
+    }
+
     this._animationFrame = window.requestAnimationFrame(this._animate.bind(this));
   }
 
@@ -84,5 +99,6 @@ class Root extends Component {
     );
   }
 }
+
 
 render(<Root />, document.body.appendChild(document.createElement('div')));

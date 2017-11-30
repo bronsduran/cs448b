@@ -146,5 +146,7 @@ export default class TripsLayer extends Layer {
 
 }
 
+
+
 TripsLayer.layerName = 'TripsLayer';
 TripsLayer.defaultProps = defaultProps;
