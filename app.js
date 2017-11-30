@@ -8,7 +8,7 @@ import {json as requestJson} from 'd3-request';
 
 var trips = require('./trips.json');
 var buildings = require('./buildings.json');
-var networkTraffic = require('./network-traffic.json');
+var networkTraffic = require('./network-traffic-EMPTY.json');
 
 // Set your mapbox token here
 const MAPBOX_TOKEN = "pk.eyJ1IjoiYnJvbnNkdXJhbiIsImEiOiJjajk5Ym5vcHgwanc3MzNwYWd4YXBqaTFiIn0.I3l_rQOCwWnZXAced7328w" //process.env.MapboxAccessToken; // eslint-disable-line
