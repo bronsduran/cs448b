@@ -51,7 +51,7 @@ class Root extends Component {
 
   _animate() {
     const timestamp = Date.now();
-    const loopLength = 155; // loop length in number of frames
+    const loopLength = 400; // loop length in number of frames
     const loopTime = 5000; // milliseconds for the entire loop
     var previousTime = this.state.lastUpdateTime;
     //console.log(((timestamp % loopTime) / loopTime) * loopLength);

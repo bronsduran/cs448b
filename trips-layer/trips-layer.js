@@ -6,7 +6,7 @@ import tripsVertex from './trips-layer-vertex.glsl';
 import tripsFragment from './trips-layer-fragment.glsl';
 
 const defaultProps = {
-  trailLength: 30,
+  trailLength: 50,
   currentTime: 0,
   getPath: d => d.path,
   getColor: d => d.color

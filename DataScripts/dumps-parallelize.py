@@ -66,7 +66,7 @@ numPackets = 1000     # the number of packets that we want to capture
 numCycles = 2       # number of mtr cycles to run
 userLat = 37.4275   # hard coded to stanford for now
 userLon = -122.1697  # hard coded to stanford for now
-timeScaleFactor = 1 # We need to slow down the packets to see them
+timeScaleFactor = 10 # We need to slow down the packets to see them
 
 # This is a list of the URL's to query from all around the world
 urls = ["http://bbc.co.uk", "http://government.ru/en/", "https://www.gov.za/", "http://www.dubai.ae/en/Pages/default.aspx", "http://english.gov.cn/"]
