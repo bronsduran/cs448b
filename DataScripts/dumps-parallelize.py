@@ -47,6 +47,39 @@
 #   ]
 # }]
 
+#------- mtr outpout format  -------#
+
+# mtr -rn -o "A" -c 3 google.com
+
+# -r generate mtr report
+# -n don't resolve host names
+# -c number of mtr cycles to run
+# -o "A" only show the average latency
+
+# Start: 2017-11-14T22:01:57-0800
+# HOST: AAA.SUNet                     Avg
+#   1.|-- 10.31.64.2                  1.2
+#   2.|-- 128.12.1.42                 1.2
+#   3.|-- 128.12.1.54                 1.5
+#   4.|-- 128.12.0.205               47.1
+#   5.|-- 137.164.23.157              3.0
+#   6.|-- 74.125.48.172               3.6
+#   7.|-- 108.170.243.1               7.4
+#   8.|-- 108.170.237.119             4.2
+#   9.|-- 216.58.195.238              3.3
+
+# -------- tcpdump output format --------- #
+
+# tcpdump -i any -n -c {num packets} ip -q
+
+# 19:17:13.090753 IP 10.31.78.74.5353 > 224.0.0.251.5353: UDP, length 1431
+
+# -i any: listen on all interfaces
+# -n: don't resolve host names
+# -q: be less verbose with output
+# -c: capture up to num packets
+# ip: only capture IP packets
+
 import collections
 import datetime
 import json
@@ -67,6 +100,7 @@ numCycles = 2       # number of mtr cycles to run
 userLat = 37.4275   # hard coded to stanford for now
 userLon = -122.1697  # hard coded to stanford for now
 timeScaleFactor = 10 # We need to slow down the packets to see them
+TCPDUMPTIMER = 3 # number of Seconds to run tcpdump
 
 # This is a list of the URL's to query from all around the world
 urls = ["http://bbc.co.uk", "http://government.ru/en/", "https://www.gov.za/", "http://www.dubai.ae/en/Pages/default.aspx", "http://english.gov.cn/"]
@@ -118,8 +152,7 @@ def isReserved(dest):
 def getLatLon(address):
 
     if address in Nodes:
-        return Nodes[address] 
-
+        return Nodes[address]
     api = "http://freegeoip.net/json/" + address
     try:
         result = urllib2.urlopen(api).read()
@@ -152,34 +185,15 @@ def timestampDifferences(timestamp1, timestamp2):
     return abs((dt2-dt1).total_seconds())
 
 
-#------- mtr outpout format  -------#
 
-# mtr -rn -o "A" -c 3 google.com
 
-# -r generate mtr report
-# -n don't resolve host names
-# -c number of mtr cycles to run
-# -o "A" only show the average latency
-
-# Start: 2017-11-14T22:01:57-0800
-# HOST: AAA.SUNet                     Avg
-#   1.|-- 10.31.64.2                  1.2
-#   2.|-- 128.12.1.42                 1.2
-#   3.|-- 128.12.1.54                 1.5
-#   4.|-- 128.12.0.205               47.1
-#   5.|-- 137.164.23.157              3.0
-#   6.|-- 74.125.48.172               3.6
-#   7.|-- 108.170.243.1               7.4
-#   8.|-- 108.170.237.119             4.2
-#   9.|-- 216.58.195.238              3.3
-
-def getRouteGivenP(destIP, relStartTime, p):
+def getRouteGivenP(destIP, relStartTime, out, err):
 
     route = []
 
-    (out, err) = p.communicate()
 
     lines = out.split('\n')
+
     for counter, line in enumerate(lines):
 
         if counter == 0 or counter == 1:
@@ -191,34 +205,40 @@ def getRouteGivenP(destIP, relStartTime, p):
         if len(line) < 3 or line[1] == "???" or isReserved(line[1]):
             continue
 
-        # should cache (ip , (lat, lon)) 
+        # should cache (ip , (lat, lon))
         route.append([getLatLon(line[1])[1], getLatLon(line[1])[0],
                       (relStartTime + float(line[2]))*timeScaleFactor])
 
     Routes[destIP] = route
-    print route
+
     return route
 
 
-# -------- tcpdump output format --------- #
-
-# tcpdump -i any -n -c {num packets} ip -q
-
-# 19:17:13.090753 IP 10.31.78.74.5353 > 224.0.0.251.5353: UDP, length 1431
-
-# -i any: listen on all interfaces
-# -n: don't resolve host names
-# -q: be less verbose with output
-# -c: capture up to num packets
-# ip: only capture IP packets
 
 
+from threading import Thread
+import signal
+def getTCPDumpWithTimer(timeout_sec):
+    """Execute `cmd` in a subprocess and enforce timeout `timeout_sec` seconds.
 
+    Return subprocess exit code on natural completion of the subprocess.
+    Raise an exception if timeout expires before subprocess completes."""
+    proc = subprocess.Popen(["tcpdump -l -i any -n ip -q"], bufsize=1, universal_newlines=True, stdout=subprocess.PIPE, shell=True)
+
+    lines = []
+    startTime = time.time()
+    while True:
+        if time.time()-startTime >= timeout_sec:
+            break
+        lines.append(proc.stdout.readline().strip())
+    proc.kill()
+
+    return lines
 
 if __name__ == "__main__":
 
     Routes = {}
-    
+
     while (True):
         VisData = []
 
@@ -230,30 +250,27 @@ if __name__ == "__main__":
             print path
             proc = subprocess.Popen([path, " -n -c "+str(numPackets)+" ip -q"], stdout=subprocess.PIPE, shell=True)
         else:
-            proc = subprocess.Popen(["tcpdump -i any -n -c "+str(numPackets)+" ip -q"], stdout=subprocess.PIPE, shell=True)
+            lines = getTCPDumpWithTimer(TCPDUMPTIMER)
 
 
-        for url in urls:
-            if proc.poll() is not None:
-                break
-            print "Getting the following url:", url
-            urllib2.urlopen(url).read()
+        # for url in urls:
+        #     if proc.poll() is not None:
+        #         break
+        #     print "Getting the following url:", url
+        #     urllib2.urlopen(url).read()
 
 
 
-        (out, err) = proc.communicate()
+
         print "Done capturing packets"
-        print out
 
         startTime = 0
 
-        lines = out.split('\n')
 
 
         print "Executing them all in parallel..."
         processes = []
         for counter, line in enumerate(lines):
-
             line = line.split(" ")
 
             if len(line) < 6 or line[2] == "wrong":
@@ -279,9 +296,8 @@ if __name__ == "__main__":
             route = Routes.get(destIP) # return none if key doesn't exist
 
             if route is None:
-                p = subprocess.Popen(["mtr -rn -o \"A\" -c " + str(numCycles) + " " + destIP],
-                                      stdout=subprocess.PIPE, shell=True)
-
+                p = subprocess.Popen(["mtr -rn -o \"A\" -c " + str(numCycles) + " " + destIP], stdout=subprocess.PIPE, shell=True)
+                
                 packet = {"dest-ip": destIP,
                           "protocol": protocol,
                           "dest-port" : destPort,
@@ -296,8 +312,10 @@ if __name__ == "__main__":
         print "Waiting for all of the parallel processes to finish!"
         beginningTime = time.time()
         for p, packet in processes:
-            p.wait()
-            packet["route"] = getRouteGivenP(packet["dest-ip"], packet["relative-start-time"], p)
+            (out, err) = p.communicate()
+
+            packet["route"] = getRouteGivenP(packet["dest-ip"], packet["relative-start-time"], out, err)
+
             Routes[destIP] = packet["dest-ip"]
             VisData.append(packet);
 
@@ -312,3 +330,4 @@ if __name__ == "__main__":
             json.dump(NodesVisData, fp)
 
         print "Done!"
+        break
