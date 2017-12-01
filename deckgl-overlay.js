@@ -25,9 +25,9 @@ export default class DeckGLOverlay extends Component {
   }
 
   render() {
-    const {viewport, buildings, networkTraffic, networkNodes, trailLength, time} = this.props;
+    const {viewport, networkTraffic, networkNodes, trailLength, time} = this.props;
 
-    if (!buildings || !networkTraffic) {
+    if (!networkTraffic || !networkNodes) {
       return null;
     }
 
@@ -72,22 +72,6 @@ export default class DeckGLOverlay extends Component {
           data: networkTraffic
         }
       })
-      
-      
-      
-    
-      // new PolygonLayer({
-      //   id: 'buildings',
-      //   data: buildings,
-      //   extruded: true,
-      //   wireframe: false,
-      //   fp64: true,
-      //   opacity: 0.5,
-      //   getPolygon: f => f.polygon,
-      //   getElevation: f => f.height,
-      //   getFillColor: f => [74, 80, 87],
-      //   lightSettings: LIGHT_SETTINGS
-      // })
     ];
 
     return (

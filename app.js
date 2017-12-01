@@ -1,15 +1,21 @@
 /* global window,document */
 import React, {Component} from 'react';
 import {render} from 'react-dom';
+import ReactDOM from 'react-dom';
+import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
+
 import MapGL from 'react-map-gl';
 import DeckGLOverlay from './deckgl-overlay.js';
 
 import {json as requestJson} from 'd3-request';
 
-var trips = require('./trips.json');
-var buildings = require('./buildings.json');
+
+import DataTable from './data-table-component';
+
 var networkTraffic = require('./network-traffic.json');
 var networkNodes = require('./network-nodes.json');
+
+
 
 // Set your mapbox token here
 const MAPBOX_TOKEN = "pk.eyJ1IjoiYnJvbnNkdXJhbiIsImEiOiJjajk5Ym5vcHgwanc3MzNwYWd4YXBqaTFiIn0.I3l_rQOCwWnZXAced7328w" //process.env.MapboxAccessToken; // eslint-disable-line
@@ -27,7 +33,6 @@ class Root extends Component {
         width: 500,
         height: 500
       },
-      buildings: buildings,
       networkTraffic: networkTraffic,
       networkNodes: networkNodes,
       time: 0,
@@ -79,7 +84,7 @@ class Root extends Component {
   _resize() {
     this._onViewportChange({
       width: window.innerWidth,
-      height: window.innerHeight
+      height: window.innerHeight*2/3
     });
   }
 
@@ -92,20 +97,26 @@ class Root extends Component {
   render() {
     const {viewport, buildings, networkTraffic, time} = this.state;
 
+   
+
     return (
-      <MapGL
-        {...viewport}
-        mapStyle="mapbox://styles/mapbox/dark-v9"
-        onViewportChange={this._onViewportChange.bind(this)}
-        mapboxApiAccessToken={MAPBOX_TOKEN}>
-        <DeckGLOverlay viewport={viewport}
-          buildings={buildings}
-          networkTraffic={networkTraffic}
-          networkNodes={networkNodes}
-          trailLength={3}
-          time={time}
-          />
-      </MapGL>
+      <MuiThemeProvider>
+        <div>
+          <MapGL
+            {...viewport}
+            mapStyle="mapbox://styles/mapbox/dark-v9"
+            onViewportChange={this._onViewportChange.bind(this)}
+            mapboxApiAccessToken={MAPBOX_TOKEN}>
+            <DeckGLOverlay viewport={viewport}
+              networkTraffic={networkTraffic}
+              networkNodes={networkNodes}
+              trailLength={3}
+              time={time}
+              />
+          </MapGL>
+          <DataTable networkTraffic={networkTraffic}/>
+        </div>
+      </MuiThemeProvider>
     );
   }
 }
