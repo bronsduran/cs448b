@@ -93,6 +93,8 @@ import time
 import urllib2
 import sys
 import os
+from threading import Thread
+import signal
 
 timeout = 10        # seconds allowing for mtr to timeout
 numPackets = 1000     # the number of packets that we want to capture
@@ -100,7 +102,7 @@ numCycles = 2       # number of mtr cycles to run
 userLat = 37.4275   # hard coded to stanford for now
 userLon = -122.1697  # hard coded to stanford for now
 timeScaleFactor = 10 # We need to slow down the packets to see them
-TCPDUMPTIMER = 3 # number of Seconds to run tcpdump
+TCPDUMPTIMER = 5 # number of Seconds to run tcpdump
 
 # This is a list of the URL's to query from all around the world
 urls = ["http://bbc.co.uk", "http://government.ru/en/", "https://www.gov.za/", "http://www.dubai.ae/en/Pages/default.aspx", "http://english.gov.cn/"]
@@ -214,10 +216,6 @@ def getRouteGivenP(destIP, relStartTime, out, err):
     return route
 
 
-
-
-from threading import Thread
-import signal
 def getTCPDumpWithTimer(timeout_sec):
     """Execute `cmd` in a subprocess and enforce timeout `timeout_sec` seconds.
 
@@ -235,99 +233,112 @@ def getTCPDumpWithTimer(timeout_sec):
 
     return lines
 
+def iterative(c):
+    global Routes
+    VisData = []
+
+    print "First, let's get all of the unique IP's"
+
+    proc = None
+    if sys.platform.startswith('win'):
+        path = os.path.dirname(os.path.abspath(__file__)) + "\\"+ 'WinDump.exe'
+        print path
+        proc = subprocess.Popen([path, " -n -c "+str(numPackets)+" ip -q"], stdout=subprocess.PIPE, shell=True)
+    else:
+        lines = getTCPDumpWithTimer(TCPDUMPTIMER)
+
+
+    # for url in urls:
+    #     if proc.poll() is not None:
+    #         break
+    #     print "Getting the following url:", url
+    #     urllib2.urlopen(url).read()
+
+
+
+
+    print "Done capturing packets"
+
+    startTime = 0
+
+
+
+    print "Executing them all in parallel..."
+    processes = []
+    for counter, line in enumerate(lines):
+        line = line.split(" ")
+
+        if len(line) < 6 or line[2] == "wrong":
+            continue
+
+
+        timestamp = line[0]
+        destIP = getIP(line[4]).replace(":","")
+        destPort = str(getPort(line[4])).replace(":","")
+        protocol = line[5].replace(",","")
+
+
+        if isReserved(destIP):
+            continue
+
+        if startTime == 0:
+            startTime = timestamp
+
+
+        print "Getting routing data for packet " + str(counter + 1) +"/"+ str(len(lines))
+
+        # need to convert to ms should be timestamp - startTime not 0
+        route = Routes.get(destIP) # return none if key doesn't exist
+
+        if route is None:
+            p = subprocess.Popen(["mtr -rn -o \"A\" -c " + str(numCycles) + " " + destIP], stdout=subprocess.PIPE, shell=True)
+
+            packet = {"dest-ip": destIP,
+                      "protocol": protocol,
+                      "dest-port" : destPort,
+                      "relative-start-time" : timestampDifferences(startTime, timestamp),
+                      "route": None}
+            processes.append((p,packet))
+
+            Routes[destIP] = "waiting"
+
+
+
+    print "Waiting for all of the parallel processes to finish!"
+    beginningTime = time.time()
+    for p, packet in processes:
+        (out, err) = p.communicate()
+
+        packet["route"] = getRouteGivenP(packet["dest-ip"], packet["relative-start-time"], out, err)
+
+        Routes[destIP] = packet["dest-ip"]
+        VisData.append(packet);
+
+
+    print "All parallel processes finished in " + str(time.time()-beginningTime) + " seconds."
+    print "Number of original packets (these nums should be equal):" + str(len(VisData)) + " " + str(len(Routes))
+
+    with open('./network-traffic-'+str(c)+'.json', 'w') as fp:
+        json.dump(VisData, fp)
+
+    with open('./network-nodes-'+str(c)+'.json', 'w') as fp:
+        json.dump(NodesVisData, fp)
+
+    print "Done with counter "+str(c)+"!"
+
+
+
+
 if __name__ == "__main__":
-
+    global Routes
     Routes = {}
-
+    c = 0
     while (True):
-        VisData = []
-
-        print "First, let's get all of the unique IP's"
-
-        proc = None
-        if sys.platform.startswith('win'):
-            path = os.path.dirname(os.path.abspath(__file__)) + "\\"+ 'WinDump.exe'
-            print path
-            proc = subprocess.Popen([path, " -n -c "+str(numPackets)+" ip -q"], stdout=subprocess.PIPE, shell=True)
-        else:
-            lines = getTCPDumpWithTimer(TCPDUMPTIMER)
-
-
-        # for url in urls:
-        #     if proc.poll() is not None:
-        #         break
-        #     print "Getting the following url:", url
-        #     urllib2.urlopen(url).read()
-
-
-
-
-        print "Done capturing packets"
-
-        startTime = 0
-
-
-
-        print "Executing them all in parallel..."
-        processes = []
-        for counter, line in enumerate(lines):
-            line = line.split(" ")
-
-            if len(line) < 6 or line[2] == "wrong":
-                continue
-
-
-            timestamp = line[0]
-            destIP = getIP(line[4]).replace(":","")
-            destPort = str(getPort(line[4])).replace(":","")
-            protocol = line[5].replace(",","")
-
-
-            if isReserved(destIP):
-                continue
-
-            if startTime == 0:
-                startTime = timestamp
-
-
-            print "Getting routing data for packet " + str(counter + 1) +"/"+ str(len(lines))
-
-            # need to convert to ms should be timestamp - startTime not 0
-            route = Routes.get(destIP) # return none if key doesn't exist
-
-            if route is None:
-                p = subprocess.Popen(["mtr -rn -o \"A\" -c " + str(numCycles) + " " + destIP], stdout=subprocess.PIPE, shell=True)
-                
-                packet = {"dest-ip": destIP,
-                          "protocol": protocol,
-                          "dest-port" : destPort,
-                          "relative-start-time" : timestampDifferences(startTime, timestamp),
-                          "route": None}
-                processes.append((p,packet))
-
-                Routes[destIP] = "waiting"
-
-
-
-        print "Waiting for all of the parallel processes to finish!"
-        beginningTime = time.time()
-        for p, packet in processes:
-            (out, err) = p.communicate()
-
-            packet["route"] = getRouteGivenP(packet["dest-ip"], packet["relative-start-time"], out, err)
-
-            Routes[destIP] = packet["dest-ip"]
-            VisData.append(packet);
-
-
-        print "All parallel processes finished in " + str(time.time()-beginningTime) + " seconds."
-        print "Number of original packets (these nums should be equal):" + str(len(VisData)) + " " + str(len(Routes))
-
-        with open('./network-traffic.json', 'w') as fp:
-            json.dump(VisData, fp)
-
-        with open('./network-nodes.json', 'w') as fp:
-            json.dump(NodesVisData, fp)
-
-        print "Done!"
-        break
+        print "Starting new thread with counter "+str(c)
+        if c >= 5:
+            c = 0
+        processThread = Thread(target=iterative, args=(c,))
+        processThread.start()
+        c += 1
+        time.sleep(float(TCPDUMPTIMER+float((TCPDUMPTIMER*0.2))))
+        print ""
