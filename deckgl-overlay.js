@@ -53,7 +53,7 @@ export default class DeckGLOverlay extends Component {
         getIP: d => d => d.ip,
         getColor: d => [255, 0, 0],
         opacity: 1,
-        radiusScale: 1000,
+        radiusScale: 5000,
         fps64: true,
         updateTriggers: {
           data: networkTraffic
@@ -63,10 +63,10 @@ export default class DeckGLOverlay extends Component {
         id: 'pathGuide',
         data: networkTraffic,
         rounded: true,
-        opacity: .5,
+        opacity: 1,
         getWidth: d => 1000,
         getPath: d => d.route,
-        getColor: d => [173, 216, 230],
+        getColor: d => [128, 128, 128],
         fps64: true,
         updateTriggers: {
           data: networkTraffic
