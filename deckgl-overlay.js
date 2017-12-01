@@ -25,7 +25,7 @@ export default class DeckGLOverlay extends Component {
   }
 
   render() {
-    const {viewport, buildings, networkTraffic, trailLength, time} = this.props;
+    const {viewport, buildings, networkTraffic, networkNodes, trailLength, time} = this.props;
 
     if (!buildings || !networkTraffic) {
       return null;
@@ -38,7 +38,7 @@ export default class DeckGLOverlay extends Component {
         getPath: d => d.route,
         getColor: d => d.protocol == 'tcp' ? [253, 128, 93] : [23, 184, 190],
         opacity: 1,
-        strokeWidth: 20,
+        strokeWidth: 50,
         trailLength,
         currentTime: time,
         fp64: true,
@@ -47,49 +47,23 @@ export default class DeckGLOverlay extends Component {
         }
       }),
       new ScatterplotLayer({
-      	id: 'networkEndpoints',
-      	data: networkTraffic,
-      	getPosition: d => ((d.route).slice(-1)[0]),
-      	getColor: d => d.protocol == 'tcp' ? [253, 128, 93] : [23, 184, 190],
-      	opacity: 0.1,
-      	radiusScale: 10000,
+      	id: 'networkNodes',
+      	data: networkNodes ,
+      	getPosition: d => d.location,
+        getIP: d => d => d.ip,
+      	getColor: d => [255, 0, 0],
+      	opacity: 1,
+      	radiusScale: 1000,
       	fps64: true,
         updateTriggers: {
           data: networkTraffic
         }
-
-      }),
-      new ScatterplotLayer({
-        id: 'networkStartpoints',
-        data: networkTraffic,
-        getPosition: d => ((d.route).slice(0,1)[0]),
-        getColor: d => d.protocol == 'tcp' ? [253, 128, 93] : [23, 184, 190],
-        opacity: 0.1,
-        radiusScale: 10000,
-        fps64: true,
-        updateTriggers: {
-          data: networkTraffic
-        }
-
-      }),
-       new ScatterplotLayer({
-        id: 'networkMidpoints',
-        data: networkTraffic,
-        getPosition: d => ((d.route).slice(1, -1)[0]),
-        getColor: d => d.protocol == 'tcp' ? [253, 128, 93] : [23, 184, 190],
-        opacity: 0.1,
-        radiusScale: 10000,
-        fps64: true,
-        updateTriggers: {
-          data: networkTraffic
-        }
-
       }),
       new PathLayer({
         id: 'pathGuide',
         data: networkTraffic,
         rounded: true,
-        getWidth: d=> 2000,
+        getWidth: d=> 500,
         getPath: d=> d.route,
         getColor: d=> [173, 216, 230],
         fps64: true,

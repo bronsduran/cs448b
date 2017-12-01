@@ -62,7 +62,7 @@ import sys
 import os
 
 timeout = 10        # seconds allowing for mtr to timeout
-numPackets = 5000     # the number of packets that we want to capture
+numPackets = 1000     # the number of packets that we want to capture
 numCycles = 2       # number of mtr cycles to run
 userLat = 37.4275   # hard coded to stanford for now
 userLon = -122.1697  # hard coded to stanford for now
@@ -75,6 +75,8 @@ multicastIPMin = int(netaddr.IPAddress("224.0.0.0"))
 multicastIPMax = int(netaddr.IPAddress("239.255.255.255"))
 localHostIP = int(netaddr.IPAddress("127.0.0.1"))
 
+Nodes = {}
+NodesVisData = []
 
 def isReserved(dest):
     """
@@ -115,11 +117,19 @@ def isReserved(dest):
 
 def getLatLon(address):
 
+    if address in Nodes:
+        return Nodes[address] 
+
     api = "http://freegeoip.net/json/" + address
     try:
         result = urllib2.urlopen(api).read()
         result = json.loads(result)
-        return (float(result["latitude"]), float(result["longitude"]))
+        result = (float(result["latitude"]), float(result["longitude"]))
+        Nodes[address] = result
+        visResult = (result[1], result[0])
+        node = {"ip": address, "location": visResult}
+        NodesVisData.append(node)
+        return result
     except:
         print("Could not find: ", address)
         return None
@@ -181,6 +191,7 @@ def getRouteGivenP(destIP, relStartTime, p):
         if len(line) < 3 or line[1] == "???" or isReserved(line[1]):
             continue
 
+        # should cache (ip , (lat, lon)) 
         route.append([getLatLon(line[1])[1], getLatLon(line[1])[0],
                       (relStartTime + float(line[2]))*timeScaleFactor])
 
@@ -207,7 +218,7 @@ def getRouteGivenP(destIP, relStartTime, p):
 if __name__ == "__main__":
 
     Routes = {}
-
+    
     while (True):
         VisData = []
 
@@ -222,11 +233,11 @@ if __name__ == "__main__":
             proc = subprocess.Popen(["tcpdump -i any -n -c "+str(numPackets)+" ip -q"], stdout=subprocess.PIPE, shell=True)
 
 
-        # for url in urls:
-        #     if proc.poll() is not None:
-        #         break
-        #     print "Getting the following url:", url
-        #     urllib2.urlopen(url).read()
+        for url in urls:
+            if proc.poll() is not None:
+                break
+            print "Getting the following url:", url
+            urllib2.urlopen(url).read()
 
 
 
@@ -294,7 +305,10 @@ if __name__ == "__main__":
         print "All parallel processes finished in " + str(time.time()-beginningTime) + " seconds."
         print "Number of original packets (these nums should be equal):" + str(len(VisData)) + " " + str(len(Routes))
 
-        with open('../network-traffic1.json', 'w') as fp:
+        with open('./network-traffic.json', 'w') as fp:
             json.dump(VisData, fp)
+
+        with open('./network-nodes.json', 'w') as fp:
+            json.dump(NodesVisData, fp)
 
         print "Done!"

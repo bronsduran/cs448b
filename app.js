@@ -8,7 +8,8 @@ import {json as requestJson} from 'd3-request';
 
 var trips = require('./trips.json');
 var buildings = require('./buildings.json');
-var networkTraffic = require('./network-traffic-EMPTY.json');
+var networkTraffic = require('./network-traffic.json');
+var networkNodes = require('./network-nodes.json');
 
 // Set your mapbox token here
 const MAPBOX_TOKEN = "pk.eyJ1IjoiYnJvbnNkdXJhbiIsImEiOiJjajk5Ym5vcHgwanc3MzNwYWd4YXBqaTFiIn0.I3l_rQOCwWnZXAced7328w" //process.env.MapboxAccessToken; // eslint-disable-line
@@ -28,6 +29,7 @@ class Root extends Component {
       },
       buildings: buildings,
       networkTraffic: networkTraffic,
+      networkNodes: networkNodes,
       time: 0,
       lastUpdateTime: 1
     };
@@ -55,21 +57,21 @@ class Root extends Component {
     //console.log(((timestamp % loopTime) / loopTime) * loopLength);
 
     this.setState({
-      lastUpdateTime: previousTime+1,
-      networkTraffic: this.latestNetworkTraffic,
+      // lastUpdateTime: previousTime+1,
+      // networkTraffic: this.latestNetworkTraffic,
       time: ((timestamp % loopTime) / loopTime) * loopLength
     });
 
-    if (previousTime % 100 == 0) {
-      console.log("Reload latest network traffic");
-      try {
-        this.latestNetworkTraffic = require('./network-traffic1.json');
-        console.log("updated to file 1");
-      } catch (e) {
-        console.log("no file 1");
-      }
-      //console.log(this.latestNetworkTraffic);
-    }
+    // if (previousTime % 100 == 0) {
+    //   console.log("Reload latest network traffic");
+    //   try {
+    //     this.latestNetworkTraffic = require('./network-traffic1.json');
+    //     console.log("updated to file 1");
+    //   } catch (e) {
+    //     console.log("no file 1");
+    //   }
+    //   //console.log(this.latestNetworkTraffic);
+    // }
 
     this._animationFrame = window.requestAnimationFrame(this._animate.bind(this));
   }
@@ -99,7 +101,8 @@ class Root extends Component {
         <DeckGLOverlay viewport={viewport}
           buildings={buildings}
           networkTraffic={networkTraffic}
-          trailLength={5}
+          networkNodes={networkNodes}
+          trailLength={3}
           time={time}
           />
       </MapGL>
