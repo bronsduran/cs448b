@@ -100,6 +100,7 @@ numCycles = 2       # number of mtr cycles to run
 userLat = 37.4275   # hard coded to stanford for now
 userLon = -122.1697  # hard coded to stanford for now
 timeScaleFactor = 10 # We need to slow down the packets to see them
+TCPDUMPTIMER = 3 # number of Seconds to run tcpdump
 
 # This is a list of the URL's to query from all around the world
 urls = ["http://bbc.co.uk", "http://government.ru/en/", "https://www.gov.za/", "http://www.dubai.ae/en/Pages/default.aspx", "http://english.gov.cn/"]
@@ -192,7 +193,7 @@ def getRouteGivenP(destIP, relStartTime, out, err):
 
 
     lines = out.split('\n')
-    print lines
+
     for counter, line in enumerate(lines):
 
         if counter == 0 or counter == 1:
@@ -249,7 +250,7 @@ if __name__ == "__main__":
             print path
             proc = subprocess.Popen([path, " -n -c "+str(numPackets)+" ip -q"], stdout=subprocess.PIPE, shell=True)
         else:
-            lines = getTCPDumpWithTimer(3)
+            lines = getTCPDumpWithTimer(TCPDUMPTIMER)
 
 
         # for url in urls:
@@ -296,7 +297,7 @@ if __name__ == "__main__":
 
             if route is None:
                 p = subprocess.Popen(["mtr -rn -o \"A\" -c " + str(numCycles) + " " + destIP], stdout=subprocess.PIPE, shell=True)
-                print destIP
+                
                 packet = {"dest-ip": destIP,
                           "protocol": protocol,
                           "dest-port" : destPort,
@@ -315,7 +316,6 @@ if __name__ == "__main__":
 
             packet["route"] = getRouteGivenP(packet["dest-ip"], packet["relative-start-time"], out, err)
 
-            print "done get route given p"
             Routes[destIP] = packet["dest-ip"]
             VisData.append(packet);
 
