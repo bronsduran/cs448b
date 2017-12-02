@@ -12,8 +12,8 @@ import {json as requestJson} from 'd3-request';
 
 import DataTable from './data-table-component';
 
-var networkTraffic = require('./network-traffic.json');
-var networkNodes = require('./network-nodes.json');
+var networkTraffic = require('./network-traffic-0.json');
+var networkNodes = require('./network-nodes-0.json');
 
 
 
@@ -36,7 +36,8 @@ class Root extends Component {
       networkTraffic: networkTraffic,
       networkNodes: networkNodes,
       time: 0,
-      lastUpdateTime: 1
+      lastUpdateTime: 1,
+      fileNumber: 1
     };
 
 
@@ -56,27 +57,36 @@ class Root extends Component {
 
   _animate() {
     const timestamp = Date.now();
-    const loopLength = 400; // loop length in number of frames
-    const loopTime = 5000; // milliseconds for the entire loop
+    const loopLength = 720; // loop length in number of frames
+    const loopTime = 12000; // milliseconds for the entire loop
     var previousTime = this.state.lastUpdateTime;
     //console.log(((timestamp % loopTime) / loopTime) * loopLength);
-
+    let timenow = ((timestamp % loopTime) / loopTime) * loopLength
     this.setState({
-      // lastUpdateTime: previousTime+1,
-      // networkTraffic: this.latestNetworkTraffic,
-      time: ((timestamp % loopTime) / loopTime) * loopLength
+       lastUpdateTime: previousTime+1,
+       networkTraffic: this.latestNetworkTraffic,
+      time: timenow
     });
+    
+    if (timenow >=0 && timenow < 5) {
+       console.log("Reload latest network traffic");
+       try {
+         this.latestNetworkTraffic = require('./network-traffic-'+this.state.fileNumber+'.json');
+         console.log("updated to file "+ this.state.fileNumber);
+         var oldNum = this.state.fileNumber + 1;
+         if (oldNum >= 5) {
+         	oldNum = 0;
+         }
 
-    // if (previousTime % 100 == 0) {
-    //   console.log("Reload latest network traffic");
-    //   try {
-    //     this.latestNetworkTraffic = require('./network-traffic1.json');
-    //     console.log("updated to file 1");
-    //   } catch (e) {
-    //     console.log("no file 1");
-    //   }
-    //   //console.log(this.latestNetworkTraffic);
-    // }
+         this.setState({
+       		fileNumber: oldNum
+   		 });
+       } catch (e) {
+         console.log("no file " + this.state.fileNumber);
+       }
+         console.log(this.latestNetworkTraffic);
+      console.log("NEW LOOP" + timenow.toString());
+    }
 
     this._animationFrame = window.requestAnimationFrame(this._animate.bind(this));
   }
