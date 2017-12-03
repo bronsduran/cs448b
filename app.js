@@ -12,15 +12,17 @@ import {json as requestJson} from 'd3-request';
 
 import DataTable from './data-table-component';
 
-var networkTraffic = require('./network-traffic-0.json');
-var networkNodes = require('./network-nodes-0.json');
+var networkTraffic = require('./data/network-traffic-0.json');
+var networkNodes = require('./data/network-nodes-0.json');
 
 
 
 // Set your mapbox token here
 const MAPBOX_TOKEN = "pk.eyJ1IjoiYnJvbnNkdXJhbiIsImEiOiJjajk5Ym5vcHgwanc3MzNwYWd4YXBqaTFiIn0.I3l_rQOCwWnZXAced7328w" //process.env.MapboxAccessToken; // eslint-disable-line
 
+
 class Root extends Component {
+
 
 
   constructor(props) {
@@ -36,8 +38,12 @@ class Root extends Component {
       networkTraffic: networkTraffic,
       networkNodes: networkNodes,
       time: 0,
-      lastUpdateTime: 1,
-      fileNumber: 1
+      startTime: Date.now(),
+      lastUpdateTime: 0,
+      fileNumber: 1,
+      totalBufferingTime: 0,
+      bufferingTimeStamp: 0,
+      updateInterval: 20000
     };
 
 
@@ -55,37 +61,53 @@ class Root extends Component {
     }
   }
 
-  _animate() {
-    const timestamp = Date.now();
-    const loopLength = 720; // loop length in number of frames
-    const loopTime = 12000; // milliseconds for the entire loop
-    var previousTime = this.state.lastUpdateTime;
-    //console.log(((timestamp % loopTime) / loopTime) * loopLength);
-    let timenow = ((timestamp % loopTime) / loopTime) * loopLength
-    this.setState({
-       lastUpdateTime: previousTime+1,
-       networkTraffic: this.latestNetworkTraffic,
-      time: timenow
-    });
-    
-    if (timenow >=0 && timenow < 5) {
-       console.log("Reload latest network traffic");
-       try {
-         this.latestNetworkTraffic = require('./network-traffic-'+this.state.fileNumber+'.json');
-         console.log("updated to file "+ this.state.fileNumber);
-         var oldNum = this.state.fileNumber + 1;
-         if (oldNum >= 5) {
-         	oldNum = 0;
-         }
+ 
 
-         this.setState({
-       		fileNumber: oldNum
-   		 });
+  _animate() {
+    
+    const timeNow = Date.now() - this.state.startTime;
+    const lastUpdateTime = this.state.lastUpdateTime;
+    var totalBufferingTime = this.state.totalBufferingTime;
+    var bufferingTimeStamp = this.state.bufferingTimeStamp;
+    const updateInterval = this.state.updateInterval;
+
+    const loopLength = 300;
+    const loopTime = 20000;
+
+    if (timeNow - lastUpdateTime >= updateInterval) {
+      try {
+        var latestNetworkTraffic = require('./data/network-traffic-'+this.state.fileNumber+'.json');
+        console.log("updated to file "+ this.state.fileNumber);
+        var oldNum = this.state.fileNumber + 1;
+        if (oldNum >= 10) {
+          oldNum = 0;
+        }
+        if (this.state.bufferingTimeStamp > 0) {
+          this.state.totalBufferingTime += timeNow - this.state.bufferingTimeStamp;
+          totalBufferingTime += timeNow - this.state.bufferingTimeStamp;
+        }
+        this.setState({
+          fileNumber: oldNum,
+          networkTraffic: latestNetworkTraffic,
+          time: 0,
+          lastUpdateTime: timeNow - totalBufferingTime,
+          bufferingTimeStamp: 0
+        });
        } catch (e) {
-         console.log("no file " + this.state.fileNumber);
+         console.log("buffering...");
+         if (bufferingTimeStamp == 0) {
+            this.state.bufferingTimeStamp = timeNow;
+            bufferingTimeStamp = timeNow;
+         }
+         this.setState({
+          time: 0
+         });
        }
-         console.log(this.latestNetworkTraffic);
-      console.log("NEW LOOP" + timenow.toString());
+    }
+    else {
+      this.setState({
+       time: ((Date.now() % loopTime) / loopTime) * loopLength
+      });
     }
 
     this._animationFrame = window.requestAnimationFrame(this._animate.bind(this));

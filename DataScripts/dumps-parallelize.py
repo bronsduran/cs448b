@@ -95,14 +95,15 @@ import sys
 import os
 from threading import Thread
 import signal
+import glob
 
 timeout = 10        # seconds allowing for mtr to timeout
-numPackets = 1000     # the number of packets that we want to capture
+numPackets = 500     # the number of packets that we want to capture
 numCycles = 2       # number of mtr cycles to run
 userLat = 37.4275   # hard coded to stanford for now
 userLon = -122.1697  # hard coded to stanford for now
 timeScaleFactor = 10 # We need to slow down the packets to see them
-TCPDUMPTIMER = 5 # number of Seconds to run tcpdump
+TCPDUMPTIMER = 20 # number of Seconds to run tcpdump
 
 # This is a list of the URL's to query from all around the world
 urls = ["http://bbc.co.uk", "http://government.ru/en/", "https://www.gov.za/", "http://www.dubai.ae/en/Pages/default.aspx", "http://english.gov.cn/"]
@@ -209,7 +210,7 @@ def getRouteGivenP(destIP, relStartTime, out, err):
 
         # should cache (ip , (lat, lon))
         route.append([getLatLon(line[1])[1], getLatLon(line[1])[0],
-                      (relStartTime + float(line[2]))*timeScaleFactor])
+                      (relStartTime + (float(line[2])*timeScaleFactor))])
 
     Routes[destIP] = route
 
@@ -235,6 +236,9 @@ def getTCPDumpWithTimer(timeout_sec):
 
 def iterative(c):
     global Routes
+    global TimestampHasInitialized
+    global InitTimestamp
+
     VisData = []
 
     print "First, let's get all of the unique IP's"
@@ -259,9 +263,8 @@ def iterative(c):
 
     print "Done capturing packets"
 
+
     startTime = 0
-
-
 
     print "Executing them all in parallel..."
     processes = []
@@ -283,6 +286,7 @@ def iterative(c):
 
         if startTime == 0:
             startTime = timestamp
+            
 
 
         print "Getting routing data for packet " + str(counter + 1) +"/"+ str(len(lines))
@@ -301,6 +305,16 @@ def iterative(c):
             processes.append((p,packet))
 
             Routes[destIP] = "waiting"
+        # else:
+        #     if (counter %% 5 == 0) {
+        #         packet = {"dest-ip": destIP,
+        #               "protocol": protocol,
+        #               "dest-port" : destPort,
+        #               "relative-start-time" : timestampDifferences(startTime, timestamp),
+        #               "route": Routes[destIP]}
+        #         VisData.append(packet)
+        #     }
+            
 
 
 
@@ -318,10 +332,10 @@ def iterative(c):
     print "All parallel processes finished in " + str(time.time()-beginningTime) + " seconds."
     print "Number of original packets (these nums should be equal):" + str(len(VisData)) + " " + str(len(Routes))
 
-    with open('./network-traffic-'+str(c)+'.json', 'w') as fp:
+    with open('data/network-traffic-'+str(c)+'.json', 'w') as fp:
         json.dump(VisData, fp)
 
-    with open('./network-nodes-'+str(c)+'.json', 'w') as fp:
+    with open('data/network-nodes-'+str(c)+'.json', 'w') as fp:
         json.dump(NodesVisData, fp)
 
     print "Done with counter "+str(c)+"!"
@@ -333,12 +347,17 @@ if __name__ == "__main__":
     global Routes
     Routes = {}
     c = 0
+
+    files = glob.glob('./data/*')
+    for f in files:
+        os.remove(f)
+
     while (True):
         print "Starting new thread with counter "+str(c)
-        if c >= 5:
+        if c >= 10:
             c = 0
         processThread = Thread(target=iterative, args=(c,))
         processThread.start()
         c += 1
-        time.sleep(float(TCPDUMPTIMER+float((TCPDUMPTIMER*0.2))))
+        time.sleep(float(TCPDUMPTIMER))
         print ""
