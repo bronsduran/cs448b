@@ -82,6 +82,7 @@ class Root extends Component {
     if (timeNow - lastUpdateTime >= updateInterval) {
       try {
         var latestNetworkTraffic = require('./data/network-traffic-'+this.state.fileNumber+'.json');
+        var latestNetworkNodes = require('./data/network-nodes-'+this.state.fileNumber+'.json');
         console.log("updated to file "+ this.state.fileNumber);
         var oldNum = this.state.fileNumber + 1;
         if (oldNum >= 10) {
@@ -96,7 +97,8 @@ class Root extends Component {
           networkTraffic: latestNetworkTraffic,
           time: 0,
           lastUpdateTime: timeNow - totalBufferingTime,
-          bufferingTimeStamp: 0
+          bufferingTimeStamp: 0,
+          networkNodes: latestNetworkNodes
         });
        } catch (e) {
          console.log("buffering...");
@@ -132,7 +134,7 @@ class Root extends Component {
   }
 
   render() {
-    const {viewport, networkTraffic, time, selectedRoutes} = this.state;
+    const {viewport, networkTraffic, time, networkNodes, selectedRoutes} = this.state;
 
     return (
       <MuiThemeProvider>

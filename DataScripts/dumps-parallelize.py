@@ -156,7 +156,6 @@ def isReserved(dest):
 
 
 def getLatLon(address):
-    global NodesVisData
 
     if address in Nodes:
         return Nodes[address]
@@ -238,8 +237,8 @@ def getTCPDumpWithTimer(timeout_sec):
 
 
 def iterative(c):
-
     global Routes
+
     VisData = []
 
     print "First, let's get all of the unique IP's"
@@ -339,8 +338,6 @@ def iterative(c):
 
 if __name__ == "__main__":
     global Routes
-    global NodesVisData
-    
     Routes = {}
     c = 0
 

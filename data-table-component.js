@@ -30,7 +30,6 @@ export default class DataTable extends Component {
    
     this.state = {
 	    height: '300px',
-	    networkTraffic: this.props.networkTraffic,
       selected: []
     };
 
@@ -39,7 +38,7 @@ export default class DataTable extends Component {
 
   handleRowSelection(rowNumber, columnId) {
     
-    const route = this.state.networkTraffic[rowNumber]["route"];
+    const route = this.props.networkTraffic[rowNumber]["route"];
     console.log(route);
     this.props.routeSelectionHandler([route]);
   }
@@ -77,7 +76,7 @@ export default class DataTable extends Component {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {this.state.networkTraffic.map((packet, index) => 
+            {this.props.networkTraffic.map((packet, index) => 
 				      <TableRow selected={this.isSelected(index)}>
 				        <TableRowColumn> {packet["relative-start-time"]} </TableRowColumn>
 				        <TableRowColumn> {packet["dest-ip"]} </TableRowColumn>
