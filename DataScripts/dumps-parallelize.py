@@ -97,13 +97,13 @@ from threading import Thread
 import signal
 import glob
 
-timeout = 10        # seconds allowing for mtr to timeout
-numPackets = 500     # the number of packets that we want to capture
-numCycles = 2       # number of mtr cycles to run
-userLat = 37.4275   # hard coded to stanford for now
-userLon = -122.1697  # hard coded to stanford for now
-timeScaleFactor = 10 # We need to slow down the packets to see them
-TCPDUMPTIMER = 20 # number of Seconds to run tcpdump
+numCycles = 2           # number of mtr cycles to run
+userLat = 37.4275       # hard coded to stanford for now
+userLon = -122.1697     # hard coded to stanford for now
+timeScaleFactor = 10    # We need to slow down the packets to see them
+TCPDUMPTIMER = 20       # number of Seconds to run tcpdump
+filterFactor = 100      # GPU can't handle all of the packets 
+corectionFactor = 1.2   # Correction for aproximate latencies
 
 # This is a list of the URL's to query from all around the world
 urls = ["http://bbc.co.uk", "http://government.ru/en/", "https://www.gov.za/", "http://www.dubai.ae/en/Pages/default.aspx", "http://english.gov.cn/"]
@@ -115,8 +115,9 @@ localHostIP = int(netaddr.IPAddress("127.0.0.1"))
 Nodes = {}
 NodesVisData = []
 
-def isReserved(dest):
-    """
+
+
+"""
     The following IP addresses are known to be reserved
 
     local IP's.
@@ -130,6 +131,8 @@ def isReserved(dest):
     Local host
     127.0.0.1
     """
+def isReserved(dest):
+    
     ip = int(netaddr.IPAddress(dest))
 
     if ip >= multicastIPMin and ip <= multicastIPMax:
@@ -153,6 +156,7 @@ def isReserved(dest):
 
 
 def getLatLon(address):
+    global NodesVisData
 
     if address in Nodes:
         return Nodes[address]
@@ -181,6 +185,8 @@ def getPort(ipPort):
     else:
         return nums[4]
 
+
+
 def timestampDifferences(timestamp1, timestamp2):
     # 15:02:19.732712
     dt1 = datetime.datetime.strptime(timestamp1, '%H:%M:%S.%f')
@@ -188,12 +194,9 @@ def timestampDifferences(timestamp1, timestamp2):
     return abs((dt2-dt1).total_seconds())
 
 
-
-
 def getRouteGivenP(destIP, relStartTime, out, err):
 
     route = []
-
 
     lines = out.split('\n')
 
@@ -208,9 +211,8 @@ def getRouteGivenP(destIP, relStartTime, out, err):
         if len(line) < 3 or line[1] == "???" or isReserved(line[1]):
             continue
 
-        # should cache (ip , (lat, lon))
         route.append([getLatLon(line[1])[1], getLatLon(line[1])[0],
-                      (relStartTime + (float(line[2])*timeScaleFactor))])
+                      (relStartTime + (float(line[2])*timeScaleFactor) + (counter * corectionFactor))])
 
     Routes[destIP] = route
 
@@ -234,11 +236,10 @@ def getTCPDumpWithTimer(timeout_sec):
 
     return lines
 
-def iterative(c):
-    global Routes
-    global TimestampHasInitialized
-    global InitTimestamp
 
+def iterative(c):
+
+    global Routes
     VisData = []
 
     print "First, let's get all of the unique IP's"
@@ -251,18 +252,13 @@ def iterative(c):
     else:
         lines = getTCPDumpWithTimer(TCPDUMPTIMER)
 
-
     # for url in urls:
     #     if proc.poll() is not None:
     #         break
     #     print "Getting the following url:", url
     #     urllib2.urlopen(url).read()
 
-
-
-
     print "Done capturing packets"
-
 
     startTime = 0
 
@@ -288,11 +284,10 @@ def iterative(c):
             startTime = timestamp
             
 
-
         print "Getting routing data for packet " + str(counter + 1) +"/"+ str(len(lines))
 
-        # need to convert to ms should be timestamp - startTime not 0
-        route = Routes.get(destIP) # return none if key doesn't exist
+    
+        route = Routes.get(destIP)
 
         if route is None:
             p = subprocess.Popen(["mtr -rn -o \"A\" -c " + str(numCycles) + " " + destIP], stdout=subprocess.PIPE, shell=True)
@@ -305,18 +300,17 @@ def iterative(c):
             processes.append((p,packet))
 
             Routes[destIP] = "waiting"
-        # else:
-        #     if (counter %% 5 == 0) {
+
+        # for this to work we need to recalculate the routing time stamps 
+        # elif (counter % filterFactor == 0): 
         #         packet = {"dest-ip": destIP,
         #               "protocol": protocol,
         #               "dest-port" : destPort,
         #               "relative-start-time" : timestampDifferences(startTime, timestamp),
         #               "route": Routes[destIP]}
         #         VisData.append(packet)
-        #     }
+        
             
-
-
 
     print "Waiting for all of the parallel processes to finish!"
     beginningTime = time.time()
@@ -345,6 +339,8 @@ def iterative(c):
 
 if __name__ == "__main__":
     global Routes
+    global NodesVisData
+    
     Routes = {}
     c = 0
 

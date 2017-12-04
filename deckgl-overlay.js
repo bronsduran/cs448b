@@ -25,7 +25,7 @@ export default class DeckGLOverlay extends Component {
   }
 
   render() {
-    const {viewport, networkTraffic, networkNodes, trailLength, time} = this.props;
+    const {viewport, networkTraffic, networkNodes, trailLength, time, selectedRoutes} = this.props;
 
     if (!networkTraffic || !networkNodes) {
       return null;
@@ -41,7 +41,7 @@ export default class DeckGLOverlay extends Component {
         strokeWidth: 1000,
         trailLength,
         currentTime: time,
-        // fp64: true,
+        fp64: true,
         updateTriggers: {
           data: networkTraffic
         }
@@ -66,12 +66,26 @@ export default class DeckGLOverlay extends Component {
         opacity: 1,
         getWidth: d => 1000,
         getPath: d => d.route,
-        getColor: d => [128, 128, 128],
-        // fps64: true,
+        getColor: d => [255, 255, 255],
+        fps64: true,
         updateTriggers: {
           data: networkTraffic
         }
+      }),
+      new PathLayer({
+        id: 'pathGuide',
+        data: selectedRoutes,
+        rounded: true,
+        opacity: 1,
+        getWidth: d => 20000,
+        getPath: d => d,
+        getColor: d => [30, 249, 53],
+        fps64: true,
+        updateTriggers: {
+          data: selectedRoutes
+        }
       })
+
     ];
 
     return (

@@ -31,14 +31,36 @@ export default class DataTable extends Component {
     this.state = {
 	    height: '300px',
 	    networkTraffic: this.props.networkTraffic,
+      selected: []
     };
+
+    console.log(this.state.networkTraffic);
+  }
+
+  handleRowSelection(rowNumber, columnId) {
+    
+    const route = this.state.networkTraffic[rowNumber]["route"];
+    console.log(route);
+    this.props.routeSelectionHandler([route]);
+  }
+
+  toggleRowSelection(selectedRows) {
+    this.setState({
+      selected: selectedRows
+    })
+  }
+
+  isSelected(index) {
+    return this.state.selected.indexOf(index) !== -1;
   }
 
   render() {
     return (
       <div>
-        <Table
+        <Table 
           height={this.state.height}
+          onCellClick={this.handleRowSelection.bind(this)}
+          onRowSelection={this.toggleRowSelection.bind(this)}
         >
           <TableHeader>
             <TableRow>
@@ -49,15 +71,19 @@ export default class DataTable extends Component {
             <TableRow>
               <TableHeaderColumn tooltip="The ID">Timestamp</TableHeaderColumn>
               <TableHeaderColumn tooltip="The Name">Destination IP</TableHeaderColumn>
-              <TableHeaderColumn tooltip="The Status">Route</TableHeaderColumn>
+              <TableHeaderColumn tooltip="The Route">Route</TableHeaderColumn>
+              <TableHeaderColumn tooltip="The Protocol">Protocol</TableHeaderColumn>
+              <TableHeaderColumn tooltip="The Destination Port">Desintation Port</TableHeaderColumn>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {this.state.networkTraffic.map((packet) => 
-				      <TableRow>
-				        <TableHeaderColumn> {packet["relative-start-time"]} </TableHeaderColumn>
-				        <TableHeaderColumn> {packet["dest-ip"]} </TableHeaderColumn>
-				        <TableHeaderColumn> {packet["route"]} </TableHeaderColumn>
+            {this.state.networkTraffic.map((packet, index) => 
+				      <TableRow selected={this.isSelected(index)}>
+				        <TableRowColumn> {packet["relative-start-time"]} </TableRowColumn>
+				        <TableRowColumn> {packet["dest-ip"]} </TableRowColumn>
+				        <TableRowColumn> {packet["route"]} </TableRowColumn>
+                <TableRowColumn> {packet["protocol"]} </TableRowColumn>
+                <TableRowColumn> {packet["dest-port"]} </TableRowColumn>
 				      </TableRow>
 				    )}
           </TableBody>

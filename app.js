@@ -15,8 +15,6 @@ import DataTable from './data-table-component';
 var networkTraffic = require('./data/network-traffic-0.json');
 var networkNodes = require('./data/network-nodes-0.json');
 
-
-
 // Set your mapbox token here
 const MAPBOX_TOKEN = "pk.eyJ1IjoiYnJvbnNkdXJhbiIsImEiOiJjajk5Ym5vcHgwanc3MzNwYWd4YXBqaTFiIn0.I3l_rQOCwWnZXAced7328w" //process.env.MapboxAccessToken; // eslint-disable-line
 
@@ -43,9 +41,11 @@ class Root extends Component {
       fileNumber: 1,
       totalBufferingTime: 0,
       bufferingTimeStamp: 0,
-      updateInterval: 20000
+      updateInterval: 20000,
+      selectedRoutes: [],
     };
 
+    this.routeSelectionHandler = this.routeSelectionHandler.bind(this);
 
   }
 
@@ -61,7 +61,12 @@ class Root extends Component {
     }
   }
 
- 
+  routeSelectionHandler(selectedRoutes) {
+    this.setState({
+      selectedRoutes: selectedRoutes
+    });
+  }
+
 
   _animate() {
     
@@ -127,9 +132,7 @@ class Root extends Component {
   }
 
   render() {
-    const {viewport, buildings, networkTraffic, time} = this.state;
-
-   
+    const {viewport, networkTraffic, time, selectedRoutes} = this.state;
 
     return (
       <MuiThemeProvider>
@@ -144,9 +147,10 @@ class Root extends Component {
               networkNodes={networkNodes}
               trailLength={3}
               time={time}
+              selectedRoutes={selectedRoutes}
               />
           </MapGL>
-          <DataTable networkTraffic={networkTraffic}/>
+          <DataTable networkTraffic={networkTraffic} selectedRoutes={selectedRoutes} routeSelectionHandler={this.routeSelectionHandler}/>
         </div>
       </MuiThemeProvider>
     );
