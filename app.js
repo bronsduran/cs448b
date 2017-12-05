@@ -109,7 +109,8 @@ class Root extends Component {
             time: 0,
             lastUpdateTime: timeNow - totalBufferingTime,
             bufferingTimeStamp: 0,
-            networkNodes: latestNetworkNodes
+            networkNodes: latestNetworkNodes,
+            selectedRoutes: []
           });
          } catch (e) {
            console.log("buffering...");
