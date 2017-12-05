@@ -153,6 +153,8 @@ class Root extends Component {
     return (
       <MuiThemeProvider>
         <div>
+        <PlaybackControls playbackToggleHandler={this.playbackToggleHandler}/> 
+
           <MapGL
             {...viewport}
             mapStyle="mapbox://styles/mapbox/dark-v9"
@@ -166,7 +168,6 @@ class Root extends Component {
               selectedRoutes={selectedRoutes}
               />
           </MapGL>
-          <PlaybackControls playbackToggleHandler={this.playbackToggleHandler}/> 
           <DataTable networkTraffic={networkTraffic} selectedRoutes={selectedRoutes} routeSelectionHandler={this.routeSelectionHandler}/>
         </div>
       </MuiThemeProvider>

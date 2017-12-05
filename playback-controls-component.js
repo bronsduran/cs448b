@@ -11,7 +11,7 @@ export default class PlaybackControls extends Component {
 
 	constructor(props) {
     super(props);
-  
+    
   } 
 
   togglePlayback() {
@@ -20,9 +20,14 @@ export default class PlaybackControls extends Component {
 
   render() {
     return (
-      <Card>
+      <Card 
+       style={{
+          width: '15%',
+          position: 'absolute',
+        }}
+        >
 		    <CardHeader
-		      title="Playback Controlls"
+		      title="Playback Controls"
 		    />
 		    <CardActions>
 		      <FlatButton label="Pause" onClick={this.togglePlayback.bind(this)} />
