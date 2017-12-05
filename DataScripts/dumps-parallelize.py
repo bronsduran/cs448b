@@ -100,9 +100,9 @@ import glob
 numCycles = 2           # number of mtr cycles to run
 userLat = 37.4275       # hard coded to stanford for now
 userLon = -122.1697     # hard coded to stanford for now
-timeScaleFactor = 10    # We need to slow down the packets to see them
+timeScaleFactor = 5    # We need to slow down the packets to see them
 TCPDUMPTIMER = 20       # number of Seconds to run tcpdump
-filterFactor = 100      # GPU can't handle all of the packets 
+filterFactor = 1000      # GPU can't handle all of the packets 
 corectionFactor = 1.2   # Correction for aproximate latencies
 
 # This is a list of the URL's to query from all around the world

@@ -7,10 +7,12 @@ import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import MapGL from 'react-map-gl';
 import DeckGLOverlay from './deckgl-overlay.js';
 
+
 import {json as requestJson} from 'd3-request';
 
 
 import DataTable from './data-table-component';
+import PlaybackControls from './playback-controls-component';
 
 var networkTraffic = require('./data/network-traffic-0.json');
 var networkNodes = require('./data/network-nodes-0.json');
@@ -43,10 +45,11 @@ class Root extends Component {
       bufferingTimeStamp: 0,
       updateInterval: 20000,
       selectedRoutes: [],
+      paused: false
     };
 
     this.routeSelectionHandler = this.routeSelectionHandler.bind(this);
-
+    this.playbackToggleHandler = this.playbackToggleHandler.bind(this);
   }
 
   componentDidMount() {
@@ -67,6 +70,12 @@ class Root extends Component {
     });
   }
 
+  playbackToggleHandler() {
+    this.setState({
+      paused: !this.state.paused
+    });
+  }
+
 
   _animate() {
     
@@ -76,45 +85,49 @@ class Root extends Component {
     var bufferingTimeStamp = this.state.bufferingTimeStamp;
     const updateInterval = this.state.updateInterval;
 
+
+
     const loopLength = 300;
     const loopTime = 20000;
 
-    if (timeNow - lastUpdateTime >= updateInterval) {
-      try {
-        var latestNetworkTraffic = require('./data/network-traffic-'+this.state.fileNumber+'.json');
-        var latestNetworkNodes = require('./data/network-nodes-'+this.state.fileNumber+'.json');
-        console.log("updated to file "+ this.state.fileNumber);
-        var oldNum = this.state.fileNumber + 1;
-        if (oldNum >= 10) {
-          oldNum = 0;
-        }
-        if (this.state.bufferingTimeStamp > 0) {
-          this.state.totalBufferingTime += timeNow - this.state.bufferingTimeStamp;
-          totalBufferingTime += timeNow - this.state.bufferingTimeStamp;
-        }
-        this.setState({
-          fileNumber: oldNum,
-          networkTraffic: latestNetworkTraffic,
-          time: 0,
-          lastUpdateTime: timeNow - totalBufferingTime,
-          bufferingTimeStamp: 0,
-          networkNodes: latestNetworkNodes
-        });
-       } catch (e) {
-         console.log("buffering...");
-         if (bufferingTimeStamp == 0) {
-            this.state.bufferingTimeStamp = timeNow;
-            bufferingTimeStamp = timeNow;
+    if (!this.state.paused) {
+      if (timeNow - lastUpdateTime >= updateInterval) {
+        try {
+          var latestNetworkTraffic = require('./data/network-traffic-'+this.state.fileNumber+'.json');
+          var latestNetworkNodes = require('./data/network-nodes-'+this.state.fileNumber+'.json');
+          console.log("updated to file "+ this.state.fileNumber);
+          var oldNum = this.state.fileNumber + 1;
+          if (oldNum >= 10) {
+            oldNum = 0;
+          }
+          if (this.state.bufferingTimeStamp > 0) {
+            this.state.totalBufferingTime += timeNow - this.state.bufferingTimeStamp;
+            totalBufferingTime += timeNow - this.state.bufferingTimeStamp;
+          }
+          this.setState({
+            fileNumber: oldNum,
+            networkTraffic: latestNetworkTraffic,
+            time: 0,
+            lastUpdateTime: timeNow - totalBufferingTime,
+            bufferingTimeStamp: 0,
+            networkNodes: latestNetworkNodes
+          });
+         } catch (e) {
+           console.log("buffering...");
+           if (bufferingTimeStamp == 0) {
+              this.state.bufferingTimeStamp = timeNow;
+              bufferingTimeStamp = timeNow;
+           }
+           this.setState({
+            time: 0
+           });
          }
-         this.setState({
-          time: 0
-         });
-       }
-    }
-    else {
-      this.setState({
-       time: ((Date.now() % loopTime) / loopTime) * loopLength
-      });
+      }
+      else {
+        this.setState({
+         time: ((Date.now() % loopTime) / loopTime) * loopLength
+        });
+      }
     }
 
     this._animationFrame = window.requestAnimationFrame(this._animate.bind(this));
@@ -152,6 +165,7 @@ class Root extends Component {
               selectedRoutes={selectedRoutes}
               />
           </MapGL>
+          <PlaybackControls playbackToggleHandler={this.playbackToggleHandler}/> 
           <DataTable networkTraffic={networkTraffic} selectedRoutes={selectedRoutes} routeSelectionHandler={this.routeSelectionHandler}/>
         </div>
       </MuiThemeProvider>

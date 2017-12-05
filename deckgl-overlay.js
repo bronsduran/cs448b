@@ -41,7 +41,7 @@ export default class DeckGLOverlay extends Component {
         strokeWidth: 1000,
         trailLength,
         currentTime: time,
-        // fp64: true,
+        fp64: true,
         updateTriggers: {
           data: networkTraffic
         }
@@ -63,7 +63,7 @@ export default class DeckGLOverlay extends Component {
         id: 'pathGuide',
         data: networkTraffic,
         rounded: true,
-        opacity: .8,
+        opacity: .25,
         getWidth: d => 1000,
         getPath: d => d.route,
         getColor: d => [255, 255, 255],
@@ -80,7 +80,7 @@ export default class DeckGLOverlay extends Component {
         getWidth: d => 10000,
         getPath: d => d,
         getColor: d => [30, 249, 53],
-        // fps64: true,
+        //fps64: true,
         updateTriggers: {
           data: selectedRoutes
         }

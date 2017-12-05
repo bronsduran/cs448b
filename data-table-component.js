@@ -22,7 +22,6 @@ const styles = {
   },
 };
 
-
 export default class DataTable extends Component {
 	
 	constructor(props) {
@@ -32,14 +31,11 @@ export default class DataTable extends Component {
 	    height: '300px',
       selected: []
     };
-
-    console.log(this.state.networkTraffic);
   }
 
   handleRowSelection(rowNumber, columnId) {
     
     const route = this.props.networkTraffic[rowNumber]["route"];
-    console.log(route);
     this.props.routeSelectionHandler([route]);
   }
 
