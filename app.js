@@ -78,7 +78,6 @@ class Root extends Component {
 
 
   _animate() {
-    
     const timeNow = Date.now() - this.state.startTime;
     const lastUpdateTime = this.state.lastUpdateTime;
     var totalBufferingTime = this.state.totalBufferingTime;
@@ -131,6 +130,7 @@ class Root extends Component {
     }
 
     this._animationFrame = window.requestAnimationFrame(this._animate.bind(this));
+	
   }
 
   _resize() {
