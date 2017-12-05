@@ -43,7 +43,7 @@ class Root extends Component {
       fileNumber: 1,
       totalBufferingTime: 0,
       bufferingTimeStamp: 0,
-      updateInterval: 20000,
+      updateInterval: 30000,
       selectedRoutes: [],
       paused: false
     };
@@ -86,8 +86,8 @@ class Root extends Component {
 
 
 
-    const loopLength = 300;
-    const loopTime = 20000;
+    const loopLength = 700;
+    const loopTime = 30000;
 
     if (!this.state.paused) {
       if (timeNow - lastUpdateTime >= updateInterval) {

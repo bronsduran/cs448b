@@ -100,10 +100,10 @@ import glob
 numCycles = 2           # number of mtr cycles to run
 userLat = 37.4275       # hard coded to stanford for now
 userLon = -122.1697     # hard coded to stanford for now
-timeScaleFactor = 5    # We need to slow down the packets to see them
-TCPDUMPTIMER = 20       # number of Seconds to run tcpdump
+timeScaleFactor = 2    # We need to slow down the packets to see them
+TCPDUMPTIMER = 30       # number of Seconds to run tcpdump
 filterFactor = 1000      # GPU can't handle all of the packets 
-corectionFactor = 1.2   # Correction for aproximate latencies
+corectionFactor = 0.5   # Correction for aproximate latencies
 
 # This is a list of the URL's to query from all around the world
 urls = ["http://bbc.co.uk", "http://government.ru/en/", "https://www.gov.za/", "http://www.dubai.ae/en/Pages/default.aspx", "http://english.gov.cn/"]
@@ -114,6 +114,7 @@ localHostIP = int(netaddr.IPAddress("127.0.0.1"))
 
 Nodes = {}
 NodesVisData = []
+latenciesD = {}
 
 
 
@@ -197,6 +198,8 @@ def getRouteGivenP(destIP, relStartTime, out, err):
 
     route = []
 
+    relativeRoute = []
+
     lines = out.split('\n')
 
     for counter, line in enumerate(lines):
@@ -210,10 +213,17 @@ def getRouteGivenP(destIP, relStartTime, out, err):
         if len(line) < 3 or line[1] == "???" or isReserved(line[1]):
             continue
 
+
+
         route.append([getLatLon(line[1])[1], getLatLon(line[1])[0],
                       (relStartTime + (float(line[2])*timeScaleFactor) + (counter * corectionFactor))])
 
+        relativeRoute.append([getLatLon(line[1])[1], getLatLon(line[1])[0],
+                      ((float(line[2])*timeScaleFactor) + (counter * corectionFactor))])
+
     Routes[destIP] = route
+
+    latenciesD[destIP] = relativeRoute
 
     return route
 
@@ -235,6 +245,15 @@ def getTCPDumpWithTimer(timeout_sec):
 
     return lines
 
+def getCorrectRoute(destIP, relStartTime):
+
+    route = latenciesD.get(destIP)
+
+    if route is not None:
+        for hop in route:
+            hop[2] += relStartTime
+
+    return route
 
 def iterative(c):
     global Routes
@@ -300,14 +319,16 @@ def iterative(c):
 
             Routes[destIP] = "waiting"
 
-        # for this to work we need to recalculate the routing time stamps 
-        # elif (counter % filterFactor == 0): 
-        #         packet = {"dest-ip": destIP,
-        #               "protocol": protocol,
-        #               "dest-port" : destPort,
-        #               "relative-start-time" : timestampDifferences(startTime, timestamp),
-        #               "route": Routes[destIP]}
-        #         VisData.append(packet)
+
+        elif (counter % filterFactor == 0): 
+            newRoute = getCorrectRoute(destIP, timestampDifferences(startTime, timestamp))
+            if newRoute is not None:
+                packet = {"dest-ip": destIP,
+                      "protocol": protocol,
+                      "dest-port" : destPort,
+                      "relative-start-time" : timestampDifferences(startTime, timestamp),
+                      "route": newRoute}
+                VisData.append(packet)
         
             
 
@@ -332,8 +353,6 @@ def iterative(c):
         json.dump(NodesVisData, fp)
 
     print "Done with counter "+str(c)+"!"
-
-
 
 
 if __name__ == "__main__":
