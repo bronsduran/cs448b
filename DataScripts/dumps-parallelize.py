@@ -100,9 +100,9 @@ import glob
 numCycles = 2           # number of mtr cycles to run
 userLat = 37.4275       # hard coded to stanford for now
 userLon = -122.1697     # hard coded to stanford for now
-timeScaleFactor = 2    # We need to slow down the packets to see them
+timeScaleFactor = 1.5    # We need to slow down the packets to see them
 TCPDUMPTIMER = 30       # number of Seconds to run tcpdump
-filterFactor = 1000      # GPU can't handle all of the packets 
+filterFactor = 100      # GPU can't handle all of the packets 
 corectionFactor = 0.5   # Correction for aproximate latencies
 
 # This is a list of the URL's to query from all around the world
@@ -245,7 +245,7 @@ def getTCPDumpWithTimer(timeout_sec):
 
     return lines
 
-def getCorrectRoute(destIP, relStartTime):
+def updateRouteLatencies(destIP, relStartTime):
 
     route = latenciesD.get(destIP)
 
@@ -321,7 +321,7 @@ def iterative(c):
 
 
         elif (counter % filterFactor == 0): 
-            newRoute = getCorrectRoute(destIP, timestampDifferences(startTime, timestamp))
+            newRoute = updateRouteLatencies(destIP, timestampDifferences(startTime, timestamp))
             if newRoute is not None:
                 packet = {"dest-ip": destIP,
                       "protocol": protocol,

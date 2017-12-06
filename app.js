@@ -3,14 +3,9 @@ import React, {Component} from 'react';
 import {render} from 'react-dom';
 import ReactDOM from 'react-dom';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
-
 import MapGL from 'react-map-gl';
 import DeckGLOverlay from './deckgl-overlay.js';
-
-
 import {json as requestJson} from 'd3-request';
-
-
 import DataTable from './data-table-component';
 import PlaybackControls from './playback-controls-component';
 
@@ -22,8 +17,6 @@ const MAPBOX_TOKEN = "pk.eyJ1IjoiYnJvbnNkdXJhbiIsImEiOiJjajk5Ym5vcHgwanc3MzNwYWd
 
 
 class Root extends Component {
-
-
 
   constructor(props) {
     super(props);
@@ -83,10 +76,7 @@ class Root extends Component {
     var totalBufferingTime = this.state.totalBufferingTime;
     var bufferingTimeStamp = this.state.bufferingTimeStamp;
     const updateInterval = this.state.updateInterval;
-
-
-
-    const loopLength = 700;
+    const loopLength = 500;
     const loopTime = 30000;
 
     if (!this.state.paused) {
