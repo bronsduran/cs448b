@@ -153,7 +153,7 @@ class Root extends Component {
             <DeckGLOverlay viewport={viewport}
               networkTraffic={networkTraffic}
               networkNodes={networkNodes}
-              trailLength={3}
+              trailLength={200}
               time={time}
               selectedRoutes={selectedRoutes}
               />
