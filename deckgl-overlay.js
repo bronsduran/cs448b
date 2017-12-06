@@ -83,7 +83,10 @@ export default class DeckGLOverlay extends Component {
         //fps64: true,
         updateTriggers: {
           data: selectedRoutes
-        }
+        },
+        onHover: this.props.onHover,
+        pickable: true
+
       })
 
     ];
