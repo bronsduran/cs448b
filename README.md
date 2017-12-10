@@ -22,12 +22,7 @@ npm install
 npm start
 ```
 
-Note: Once the python script is started, it removes all data from the data file, so if you are just wanting to test the visualization, it is recommended that you run the commands below and not the data script. 
-
-```
-npm install
-npm start
-```
+Note: Once the python script is started, it removes all data from the data file, so if you are just wanting to test the visualization, it is recommended that you just start the client visualization, as it come pre-loaded with data.
 
 ### Data format
 Sample data is stored in network-nodes-sample.json as well as network-traffic-sample.json 
