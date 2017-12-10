@@ -1,7 +1,8 @@
 # cs448b
 Real Time Network Visualization
+https://github.com/bronsduran/cs448b
 
-## Requirments:
+## Requirements:
 
 These build instructions are for Linux and Mac OS systems. Support for other systems is slated for a future release. 
 
