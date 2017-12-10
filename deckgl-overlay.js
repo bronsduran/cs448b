@@ -24,6 +24,25 @@ export default class DeckGLOverlay extends Component {
     };
   }
 
+  getLineColor(protocol) {
+   
+    switch (protocol){   
+      
+      case'tcp':
+        return [253, 128, 93];
+        break;
+
+      case'UDP':
+        return [23, 184, 190];
+        break;
+
+      default:
+        return [255, 255, 0];
+        break;
+
+    }
+  }
+
   render() {
     const {viewport, networkTraffic, networkNodes, trailLength, time, selectedRoutes} = this.props;
 
@@ -36,12 +55,12 @@ export default class DeckGLOverlay extends Component {
         id: 'networkTraffic',
         data: networkTraffic,
         getPath: d => d.route,
-        getColor: d => d.protocol == 'tcp' ? [253, 128, 93] : [23, 184, 190],
+        getColor: d => this.getLineColor(d.protocol),
         opacity: 1,
         strokeWidth: 1000,
         trailLength,
         currentTime: time,
-        fp64: true,
+        // fp64: true,
         updateTriggers: {
           data: networkTraffic
         }
@@ -53,7 +72,7 @@ export default class DeckGLOverlay extends Component {
         getIP: d => d => d.ip,
         getColor: d => [255, 0, 0],
         opacity: 1,
-        radiusScale: 5000,
+        radiusScale: 4000,
         // fps64: true,
         updateTriggers: {
           data: networkTraffic
@@ -77,7 +96,7 @@ export default class DeckGLOverlay extends Component {
         data: selectedRoutes,
         rounded: true,
         opacity: 1,
-        getWidth: d => 10000,
+        getWidth: d => 5000,
         getPath: d => d,
         getColor: d => [30, 249, 53],
         //fps64: true,

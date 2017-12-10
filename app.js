@@ -9,8 +9,8 @@ import {json as requestJson} from 'd3-request';
 import DataTable from './data-table-component';
 import PlaybackControls from './playback-controls-component';
 
-var networkTraffic = require('./data/network-traffic-0.json');
-var networkNodes = require('./data/network-nodes-0.json');
+var networkTraffic = require('./data/network-traffic.json');
+var networkNodes = require('./data/network-nodes.json');
 
 // Set your mapbox token here
 const MAPBOX_TOKEN = "pk.eyJ1IjoiYnJvbnNkdXJhbiIsImEiOiJjajk5Ym5vcHgwanc3MzNwYWd4YXBqaTFiIn0.I3l_rQOCwWnZXAced7328w" //process.env.MapboxAccessToken; // eslint-disable-line
@@ -82,8 +82,11 @@ class Root extends Component {
     if (!this.state.paused) {
       if (timeNow - lastUpdateTime >= updateInterval) {
         try {
-          var latestNetworkTraffic = require('./data/network-traffic-'+this.state.fileNumber+'.json');
-          var latestNetworkNodes = require('./data/network-nodes-'+this.state.fileNumber+'.json');
+          // var latestNetworkTraffic = require('./data/network-traffic-'+this.state.fileNumber+'.json');
+          // var latestNetworkNodes = require('./data/network-nodes-'+this.state.fileNumber+'.json');
+          var latestNetworkTraffic = require('./data/network-traffic.json');
+          var latestNetworkNodes = require('./data/network-nodes.json');
+
           console.log("updated to file "+ this.state.fileNumber);
           var oldNum = this.state.fileNumber + 1;
           if (oldNum >= 10) {
@@ -153,7 +156,7 @@ class Root extends Component {
             <DeckGLOverlay viewport={viewport}
               networkTraffic={networkTraffic}
               networkNodes={networkNodes}
-              trailLength={200}
+              trailLength={10}
               time={time}
               selectedRoutes={selectedRoutes}
               />

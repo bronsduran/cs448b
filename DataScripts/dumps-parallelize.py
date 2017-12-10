@@ -100,7 +100,7 @@ import glob
 numCycles = 2           # number of mtr cycles to run
 userLat = 37.4275       # hard coded to stanford for now
 userLon = -122.1697     # hard coded to stanford for now
-timeScaleFactor = 1.5    # We need to slow down the packets to see them
+timeScaleFactor = 1.2    # We need to slow down the packets to see them
 TCPDUMPTIMER = 30       # number of Seconds to run tcpdump
 filterFactor = 100      # GPU can't handle all of the packets 
 corectionFactor = 0.5   # Correction for aproximate latencies
@@ -346,10 +346,10 @@ def iterative(c):
     print "All parallel processes finished in " + str(time.time()-beginningTime) + " seconds."
     print "Number of original packets (these nums should be equal):" + str(len(VisData)) + " " + str(len(Routes))
 
-    with open('data/network-traffic-'+str(c)+'.json', 'w') as fp:
+    with open('data/network-traffic.json', 'w') as fp:
         json.dump(VisData, fp)
 
-    with open('data/network-nodes-'+str(c)+'.json', 'w') as fp:
+    with open('data/network-nodes.json', 'w') as fp:
         json.dump(NodesVisData, fp)
 
     print "Done with counter "+str(c)+"!"
@@ -364,12 +364,12 @@ if __name__ == "__main__":
     for f in files:
         os.remove(f)
 
-    while (True):
-        print "Starting new thread with counter "+str(c)
-        if c >= 10:
-            c = 0
-        processThread = Thread(target=iterative, args=(c,))
-        processThread.start()
-        c += 1
-        time.sleep(float(TCPDUMPTIMER))
-        print ""
+    # while (True):
+    print "Starting new thread with counter "+str(c)
+    if c >= 10:
+        c = 0
+    processThread = Thread(target=iterative, args=(c,))
+    processThread.start()
+    c += 1
+    time.sleep(float(TCPDUMPTIMER))
+    print ""

@@ -33,6 +33,12 @@ export default class PlaybackControls extends Component {
 		      <FlatButton label="Pause" onClick={this.togglePlayback.bind(this)} />
 		      <FlatButton label="Play" 	onClick={this.togglePlayback.bind(this)}/>
 		    </CardActions>
+        <CardText>
+          <p>TCP: Orange </p>
+          <p>UDP: Blue </p>
+          <p>ICMP: Yellow </p>
+          <p>Select individual packet in table below to view it's route. </p>
+        </CardText>
 		  </Card>
     );
   }
