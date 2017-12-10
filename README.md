@@ -22,12 +22,11 @@ npm install
 npm start
 ```
 
-Note: Once the python script is started, it removes all data from the data file, so if you just wanted to test the visualization, it is recommended that you just run 
+Note: Once the python script is started, it removes all data from the data file, so if you are just wanting to test the visualization, it is recommended that you run the commands below and not the data script. 
 
 ```
 npm install
 npm start
-
 ```
 
 ### Data format
