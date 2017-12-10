@@ -12,7 +12,7 @@ You will need to have the following resources installed on your system:
 - `npm` package manager for Javascript (bundled with the Node.js installer above)
 
 ### Usage
-Copy the content of this folder to your project. To start the data capture and processsing module run
+Copy the content of this folder to your project. To start the data capture and processing module run
 ```
 sudo python DataScripts/dumps-parallelize.py
 ```
